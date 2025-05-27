@@ -83,38 +83,6 @@ namespace WebCorePy.Controllers
             //return View("Index");
         }
 
-        /*
-        /// <summary>
-        /// https://docs.microsoft.com/ru-ru/aspnet/core/mvc/models/file-uploads?view=aspnetcore-3.0
-        /// </summary>
-        /// <param name="files"></param>
-        /// <returns></returns>
-        [HttpPost("UploadFiles")]
-        public async Task<IActionResult> Post(List<IFormFile> files)        // поменять сходу не получилось (IFormFile fileSingle)
-        {
-            long size = files.Sum(f => f.Length);
-
-            // full path to file in temp location
-            var filePath = Path.GetTempFileName();
-
-            foreach (var formFile in files)
-            {
-                if (formFile.Length > 0)
-                {
-                    using (var stream = new FileStream(filePath, FileMode.Create))
-                    {
-                        await formFile.CopyToAsync(stream);
-                    }
-                }
-            }
-
-            // process uploaded files
-            // Don't rely on or trust the FileName property without validation.
-
-            return Ok(new { count = files.Count, size, filePath }); // {"count":1,"size":18506,"filePath":"C:\\Users\\Дударев Виктор\\AppData\\Local\\Temp\\tmp3CAF.tmp"}
-        }
-        */
-
 
         private string GetUploadFolder() {
             return env.WebRootPath + "\\Upload";
@@ -159,7 +127,7 @@ namespace WebCorePy.Controllers
             return null;
         }
 
-
+        // TODO: really?
         private string GetAlgorithmName(string json) {
             int i1 = json.IndexOf("\"name\": \"");
             if (i1 < 0)
@@ -258,15 +226,6 @@ namespace WebCorePy.Controllers
                 ;
         }
 
-        private string GetRunBatTemplate()
-        {
-            string strTemplate = System.IO.File.ReadAllText(env.WebRootPath + "\\py\\!run.template.bat", Encoding.GetEncoding(866));
-            string py = config.GetValue<string>("AppSettings:AnacondaPath");
-            strTemplate = strTemplate.Replace("#WebRootPath#", env.WebRootPath);
-            strTemplate = strTemplate.Replace("#PY#", py);
-            return strTemplate;
-        }
-
         /// <summary>
         /// Основные вычисления
         /// </summary>
@@ -286,7 +245,6 @@ namespace WebCorePy.Controllers
             HttpContext.Session.Remove("fileTrain");
             HttpContext.Session.Remove("filePredict");
             UpdateAlgorithmCookiesByRequestForm();  // сохраняем выбор алгоритмов в куки
-            //GetAlgorithmsHtml();
 
             ViewBag.ShowResults = false;
             ViewBag.ShowResultsXls = false;
@@ -312,8 +270,6 @@ namespace WebCorePy.Controllers
             // process uploaded files
             //return Ok(new { count = files.Count, size, filePath, WebRootPath = env.WebRootPath }); // {"count":1,"size":18506,"filePath":"C:\\Users\\Дударев Виктор\\AppData\\Local\\Temp\\tmp3CAF.tmp"}
 
-            string runBat = folder + "\\run.bat";
-            //prepareBat();
             string py = config.GetValue<string>("AppSettings:AnacondaPath");
             //System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);    // ???????
             // %root%\python.exe "D:\WWW\IMET\IMETCorePy\WebCorePy\wwwroot\py\regressor.py" "D:\WWW\IMET\IMETCorePy\WebCorePy\wwwroot\upload\!settings.json"
@@ -325,22 +281,6 @@ namespace WebCorePy.Controllers
                 encoding: new UTF8Encoding(false)   // without BOM!
                 );
 
-//            System.IO.File.WriteAllText(runBat,
-//$@"
-//del ""{env.WebRootPath}\Upload\TestData\*.*"" 2>NUL
-//rmdir ""{env.WebRootPath}\Upload\TestData"" 2>NUL
-//del ""{env.WebRootPath}\Upload\log.txt"" 2>NUL
-//del ""{env.WebRootPath}\Upload\result.xls"" 2>NUL
-//del ""{env.WebRootPath}\Upload\result.xlsx"" 2>NUL
-//del ""{env.WebRootPath}\Upload\result.csv"" 2>NUL
-//del ""{env.WebRootPath}\Upload\result.txt"" 2>NUL
-//set PATH={py}\Scripts;{py};%PATH%
-//set root={py}
-//call %root%\Scripts\activate base
-//%root%\python.exe ""{env.WebRootPath}\py\regressor.py"" ""{env.WebRootPath}"" ""{HttpContext.Session.GetString("fileTrain")}"" ""{HttpContext.Session.GetString("filePredict")}"" ""{timeout4Method}""
-//call %root%\Scripts\deactivate.bat"
-//            , encoding: Encoding.GetEncoding(866)
-//            );
             string batFileInstructions = GetRunBatTemplate();
             System.IO.File.WriteAllText(runBat, batFileInstructions, encoding: Encoding.GetEncoding(866));
             // запустим программку на питоне
@@ -352,15 +292,6 @@ namespace WebCorePy.Controllers
             }
             return View("Index");
         }
-
-
-        private void RunPythonScript(string args) {
-            string py = config.GetValue<string>("AppSettings:PythonExePath");
-            //if (string.IsNullOrEmpty(py))
-            //    py = "C:\\ProgramData\\Anaconda3\\python.exe";
-            RunCmd(py, args);
-        }
-
 
         private void Log(string message)
         {
