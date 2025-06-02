@@ -280,16 +280,6 @@ namespace WebCorePy.Controllers
                 //encoding: Encoding.GetEncoding(866)
                 encoding: new UTF8Encoding(false)   // without BOM!
                 );
-
-            string batFileInstructions = GetRunBatTemplate();
-            System.IO.File.WriteAllText(runBat, batFileInstructions, encoding: Encoding.GetEncoding(866));
-            // запустим программку на питоне
-            // RunPythonScript("\"" + env.WebRootPath + "\\py\\regressor.py\" \"" + HttpContext.Session.GetString("fileTrain") + "\" \"" + HttpContext.Session.GetString("filePredict") + "\" \"result.xls\" \"log.txt\"");
-            RunCmd(runBat, string.Empty);
-            ViewBag.ShowResultsXlsExtension = System.IO.Path.GetExtension(HttpContext.Session.GetString("fileTrain")).Substring(1).ToLower();
-            if (!string.IsNullOrEmpty(HttpContext.Session.GetString("filePredict"))) {
-                ViewBag.ShowResultsXls = true;
-            }
             return View("Index");
         }
 
