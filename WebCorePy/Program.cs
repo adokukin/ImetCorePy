@@ -1,9 +1,11 @@
 using System;
+using System.Threading.Channels;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using WebCorePy;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.Configure<CookiePolicyOptions>(options =>
@@ -13,6 +15,8 @@ builder.Services.Configure<CookiePolicyOptions>(options =>
 });
 
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>(); // добавим возможность доступа к контексту HttpContext
+builder.Services.AddSingleton<IChannelSingletonService, ChannelSingletonService>();
+builder.Services.AddHostedService<WebCorePy.DispatcherService>();
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {

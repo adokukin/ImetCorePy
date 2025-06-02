@@ -23,9 +23,11 @@ namespace WebCorePy.Controllers
         private static object lockObj = new object();
         IWebHostEnvironment env { get; }
         IConfiguration config { get; }
-        public HomeController(IWebHostEnvironment env, IConfiguration config) {
+        IChannelSingletonService channel {  get; }
+        public HomeController(IWebHostEnvironment env, IConfiguration config, IChannelSingletonService channel) {
             this.env = env;
             this.config = config;
+            this.channel = channel;
         }
 
 
