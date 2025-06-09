@@ -4,21 +4,27 @@ namespace WebCorePy
 {
     public struct Message
     {
-        int Id;
-        int process;
-        string value;
+        public int id;
+        public int? source;
+        public int target;
+        public string session;
+        public string value;
     }
 
     public interface IChannelSingletonService
     {
+        public Channel<Message> channel { get; }
     }
 
     public class ChannelSingletonService : IChannelSingletonService
     {
-        protected Channel<Message> channel = null;
+        private Channel<Message> _channel = null;
+
 
         public ChannelSingletonService() {
-            this.channel = Channel.CreateUnbounded<Message>();
+            this._channel = System.Threading.Channels.Channel.CreateUnbounded<Message>();
         }
+
+        public Channel<Message> channel { get => _channel; }
     }
 }

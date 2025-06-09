@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -23,11 +24,11 @@ namespace WebCorePy.Controllers
         private static object lockObj = new object();
         IWebHostEnvironment env { get; }
         IConfiguration config { get; }
-        IChannelSingletonService channel {  get; }
-        public HomeController(IWebHostEnvironment env, IConfiguration config, IChannelSingletonService channel) {
+        Channel<Message> channel {  get; }
+        public HomeController(IWebHostEnvironment env, IConfiguration config, IChannelSingletonService channelService) {
             this.env = env;
             this.config = config;
-            this.channel = channel;
+            this.channel = channelService.channel;
         }
 
 
@@ -237,6 +238,39 @@ namespace WebCorePy.Controllers
         [HttpPost("UploadFiles")]
         public async Task<IActionResult> Post(List<IFormFile> fileTrain, List<IFormFile> filePredict, string timeout)        // поменять сходу не получилось (IFormFile fileSingle)
         {
+            Message candidate;
+            Message response;
+
+            Message request;
+            // TODO: increment in session
+            request.id = 1;
+            request.session = HttpContext.Session.Id;
+            request.target = 0;
+            request.source = null;
+            request.value = "request";
+            channel.Writer.TryWrite(request);
+
+            bool responded = false;
+
+            while (!responded)
+            {
+                await channel.Reader.WaitToReadAsync();
+                if (channel.Reader.CanPeek)
+                {
+                    channel.Reader.TryPeek(out candidate);
+                    if (((candidate.session == request.session) || (candidate.target == request.source))
+                        && (candidate.target != 0) && (candidate.id == request.id))
+                    {
+                        channel.Reader.TryRead(out response);
+                        responded = true;
+                        ViewBag.Msg = $"<div class=\"alert alert-success\" role=\"alert\">Запущен обработчик {response.target} для {request.session}, ids {request.id} - {response.id}</div>";
+                    }
+                }
+            }
+            return View("Index");
+
+
+            /*
             if (process != null)
             {
                 ViewBag.Msg = $"<div class=\"alert alert-danger\" role=\"alert\">Идет обработка... Для ее принудительного завершения перейдите по ссылке \"Очистить сессию\"</div>";
@@ -282,7 +316,7 @@ namespace WebCorePy.Controllers
                 //encoding: Encoding.GetEncoding(866)
                 encoding: new UTF8Encoding(false)   // without BOM!
                 );
-            return View("Index");
+            */
         }
 
         private void Log(string message)
