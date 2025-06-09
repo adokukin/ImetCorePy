@@ -248,6 +248,7 @@ namespace WebCorePy.Controllers
             request.target = 0;
             request.source = null;
             request.value = "request";
+            request.status = null;
             channel.Writer.TryWrite(request);
 
             bool responded = false;
@@ -263,7 +264,7 @@ namespace WebCorePy.Controllers
                     {
                         channel.Reader.TryRead(out response);
                         responded = true;
-                        ViewBag.Msg = $"<div class=\"alert alert-success\" role=\"alert\">Запущен обработчик {response.target} для {request.session}, ids {request.id} - {response.id}</div>";
+                        ViewBag.Msg = $"<div class=\"alert alert-success\" role=\"alert\">Запусе обработчика {response.target} для {request.session}, ids {request.id} - {response.id}, status {response.status}</div>";
                     }
                 }
             }

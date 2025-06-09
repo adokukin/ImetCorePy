@@ -2,13 +2,20 @@
 
 namespace WebCorePy
 {
+    public enum Status
+    {
+        SUCCESS = 0,
+        ERROR = 1
+    }
+
     public struct Message
     {
         public int id;
         public int? source;
-        public int target;
+        public int? target;
         public string session;
         public string value;
+        public Status? status;
     }
 
     public interface IChannelSingletonService
