@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.VisualStudio.Web.CodeGeneration;
 using System;
 using System.Threading;
 using System.Threading.Channels;
@@ -53,14 +54,13 @@ namespace WebCorePy
             Message candidate;
             while (!stoppingToken.IsCancellationRequested)
             {
-                await channel.Reader.WaitToReadAsync(stoppingToken);
-                if (channel.Reader.CanPeek) {
-                    channel.Reader.TryPeek(out candidate);
-                    if (candidate.target == 0)
+                bool available = await channel.Reader.WaitToReadAsync(stoppingToken);
+                if (available && channel.Reader.CanPeek) {
+                    if (channel.Reader.TryPeek(out candidate) && (candidate.target == 0))
                     {
-                        Message request;
-                        channel.Reader.TryRead(out request);
-                        
+                        Message request = await channel.Reader.ReadAsync();
+                        logger.LogInformation($"Read success {request.id}, {request.source} -> {request.target}, {request.session}, {request.value}");
+
                         Message response;
                         response.id = request.id;
                         response.session = request.session;
