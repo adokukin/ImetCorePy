@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Threading;
 using System.Threading.Channels;
@@ -17,10 +18,14 @@ namespace WebCorePy
         public const int NumProcessors = 5;
 
         private Channel<Message> channel;
+        private readonly ILogger logger;
+
         private Processor?[] pool;
-        public DispatcherService(IChannelSingletonService channelService)
+        public DispatcherService(IChannelSingletonService channelService, ILogger<DispatcherService> logger)
         {
             channel = channelService.channel;
+            this.logger = logger;
+
             pool = new Processor?[NumProcessors];
             for (int i = 0; i < pool.Length; i++)
             {
