@@ -268,13 +268,25 @@ namespace WebCorePy.Controllers
                 {
                     if (channel.Reader.TryPeek(out candidate))
                     {
-                        if (((candidate.session == request.session) || (candidate.target == request.source))
-                            && (candidate.target != 0) && (candidate.id == request.id))
+                        if ((candidate.target != 0) &&
+                            ((candidate.session == request.session) || (candidate.target == request.source)))
                         {
                             response = await channel.Reader.ReadAsync();
                             responded = true;
-                            ViewBag.Msg = $"<div class=\"alert alert-success\" role=\"alert\">Запуск обработчика {response.target} для {request.session}, ids {request.id} - {response.id}, status {response.status}</div>";
-                            HttpContext.Session.SetInt32("slot", request.target);
+                            if (response.id < request.id)
+                            {
+                                // skip missed messages
+                                // TODO: someone also has to clean lost messages, i.e. browser sent and broke before reading
+                            }
+                            else if (response.id == request.id)
+                            {
+                                ViewBag.Msg = $"<div class=\"alert alert-success\" role=\"alert\">Запуск обработчика {response.target} для {request.session}, ids {request.id} - {response.id}, status {response.status}</div>";
+                            }
+                            else 
+                            {
+                                // TODO: something is very wrong
+                            }
+                            HttpContext.Session.SetInt32("slot", response.target);
                         }
                     }
                 }
