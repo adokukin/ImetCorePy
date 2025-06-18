@@ -236,7 +236,7 @@ namespace WebCorePy.Controllers
         /// <param name="filePredict">файл для тестирования</param>
         /// <returns></returns>
         [HttpPost("UploadFiles")]
-        public async Task<IActionResult> Post(List<IFormFile> fileTrain, List<IFormFile> filePredict, string timeout)        // поменять сходу не получилось (IFormFile fileSingle)
+        public async Task<IActionResult> Post(List<IFormFile> fileTrain, List<IFormFile> filePredict, string timeout)
         {
             Message candidate;
             Message response;
@@ -255,16 +255,20 @@ namespace WebCorePy.Controllers
 
             while (!responded)
             {
-                await channel.Reader.WaitToReadAsync();
-                if (channel.Reader.CanPeek)
+                // TODO: cancellation condition
+                bool available = await channel.Reader.WaitToReadAsync();
+
+                if (available && channel.Reader.CanPeek)
                 {
-                    channel.Reader.TryPeek(out candidate);
-                    if (((candidate.session == request.session) || (candidate.target == request.source))
-                        && (candidate.target != 0) && (candidate.id == request.id))
+                    if (channel.Reader.TryPeek(out candidate))
                     {
-                        channel.Reader.TryRead(out response);
-                        responded = true;
-                        ViewBag.Msg = $"<div class=\"alert alert-success\" role=\"alert\">Запусе обработчика {response.target} для {request.session}, ids {request.id} - {response.id}, status {response.status}</div>";
+                        if (((candidate.session == request.session) || (candidate.target == request.source))
+                            && (candidate.target != 0) && (candidate.id == request.id))
+                        {
+                            response = await channel.Reader.ReadAsync();
+                            responded = true;
+                            ViewBag.Msg = $"<div class=\"alert alert-success\" role=\"alert\">Запусе обработчика {response.target} для {request.session}, ids {request.id} - {response.id}, status {response.status}</div>";
+                        }
                     }
                 }
             }
