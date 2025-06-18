@@ -23,10 +23,9 @@ builder.Services.AddHostedService<WebCorePy.DispatcherService>();
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
-    // Set a short timeout for easy testing.
+    // TODO: reconsider timeout scenario
     options.IdleTimeout = TimeSpan.FromMinutes(60);
     options.Cookie.HttpOnly = true;
-    // Make the session cookie essential
     options.Cookie.IsEssential = true;
 });
 
