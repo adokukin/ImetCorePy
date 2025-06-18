@@ -1,7 +1,5 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.VisualStudio.Web.CodeGeneration;
-using System;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;

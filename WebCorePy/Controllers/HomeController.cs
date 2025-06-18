@@ -286,7 +286,15 @@ namespace WebCorePy.Controllers
                             {
                                 // TODO: something is very wrong
                             }
-                            HttpContext.Session.SetInt32("slot", response.target);
+
+                            if ((response.target != null) && (response.status == Status.SUCCESS))
+                            {
+                                HttpContext.Session.SetInt32("slot", (int)response.target);
+                            }
+                            else
+                            {
+                                // TODO: process Status.ERROR
+                            }
                         }
                     }
                 }

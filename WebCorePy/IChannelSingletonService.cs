@@ -12,7 +12,7 @@ namespace WebCorePy
     {
         public int id;
         public int? source;
-        public int target;
+        public int? target;
         public string session;
         public string value;
         public Status? status;
