@@ -242,13 +242,19 @@ namespace WebCorePy.Controllers
             Message response;
 
             Message request;
-            // TODO: increment in session
-            request.id = 1;
+
+            int? id = HttpContext.Session.GetInt32("id");
+            request.id = id == null ? 1 : (int)id + 1;
+            HttpContext.Session.SetInt32("id", request.id);
+
+            int? slot = HttpContext.Session.GetInt32("slot");
+            request.source = slot;
+
             request.session = HttpContext.Session.Id;
             request.target = 0;
-            request.source = null;
             request.value = "request";
             request.status = null;
+            
             channel.Writer.TryWrite(request);
 
             bool responded = false;
