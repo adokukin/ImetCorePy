@@ -8,8 +8,10 @@ namespace WebCorePy
         CHECK,
         ACCEPTED,
         BUSY,
+        EMPTY,
         IN_PROGRESS,
-        READY
+        READY,
+        ERROR
     }
 
     public struct Message

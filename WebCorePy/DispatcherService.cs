@@ -1,15 +1,36 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using System;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 
 namespace WebCorePy
 {
+    public enum State
+    {
+        EMPTY,
+        IN_PROGRESS,
+        READY
+    }
+
     public struct Processor
     {
         public string process; // TODO: proper type
-        // TODO: file references
+        public State state;
+        public DateTime? start;
+        public DateTime? end;
+        public string file_train;
+        public string file_test;
+        public Processor ()
+        {
+            process = null;
+            state = State.EMPTY;
+            start = null;
+            end = null;
+            file_train = null;
+            file_test = null;
+        }
     }
 
     public class DispatcherService : BackgroundService
@@ -19,32 +40,41 @@ namespace WebCorePy
         private Channel<Message> channel;
         private readonly ILogger logger;
 
-        private Processor?[] pool;
+        private Processor[] pool;
         public DispatcherService(IChannelSingletonService channelService, ILogger<DispatcherService> logger)
         {
             channel = channelService.channel;
             this.logger = logger;
 
-            pool = new Processor?[NumProcessors];
+            pool = new Processor[NumProcessors];
             for (int i = 0; i < pool.Length; i++)
             {
-                pool[i] = null;
+                pool[i] = new Processor();
             }
         }
 
-        protected int? GetFreeSlot()
+        protected int GetFreeSlot()
         {
-            int? ret = null;
+            int oldestProcessor = -1;
+            DateTime? minStarted = DateTime.MaxValue;
+
             for (int i = 0;i < pool.Length;i++)
             {
-                if (pool[i] == null)
+                if (pool[i].state == State.EMPTY)
                 {
-                    pool[i] = new Processor();
-                    ret = i;
-                    break;
+                    return i;
+                }
+                else
+                {
+                    DateTime started = (DateTime)pool[i].start;
+                    if (started < minStarted)
+                    {
+                        minStarted = started;
+                        oldestProcessor = i;
+                    }
                 }
             }
-            return ret;
+            return oldestProcessor;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -63,26 +93,67 @@ namespace WebCorePy
                         response.id = request.id;
                         response.session = request.session;
                         response.source = 0;
-                        if (request.source == null)
+
+                        if (request.status == Status.NEW)
                         {
-                            int? slot = GetFreeSlot();
-                            if (slot != null)
+                            if (request.source == null)
                             {
-                                response.target = (int)slot;
-                                response.status = Status.ACCEPTED;
+                                int slot = GetFreeSlot();
+                                response.target = slot;
+                                response.status = pool[slot].state == State.EMPTY ? Status.ACCEPTED : Status.BUSY;
                             }
                             else
                             {
-                                response.target = null;
-                                response.status = Status.BUSY;
+                                int slot = (int)request.source;
+                                response.target = slot;
+                                switch(pool[slot].state)
+                                {
+                                    case State.READY:
+                                        response.status = Status.READY;
+                                        break;
+                                    case State.IN_PROGRESS:
+                                        response.status = Status.IN_PROGRESS;
+                                        break;
+                                    default:
+                                        response.status = Status.ACCEPTED;
+                                        break;
+                                }
                             }
+                            response.value = "response";
+                        }
+                        else if (request.status == Status.CHECK) 
+                        {
+                            if (request.source == null) 
+                            {
+                                response.target = null;
+                                response.status = Status.ERROR;
+                            }
+                            else
+                            {
+                                int slot = (int)request.source;
+                                response.target = slot;
+                                switch (pool[slot].state)
+                                {
+                                    case State.READY:
+                                        response.status = Status.READY;
+                                        break;
+                                    case State.IN_PROGRESS:
+                                        response.status = Status.IN_PROGRESS;
+                                        break;
+                                    default:
+                                        response.status = Status.EMPTY;
+                                        break;
+                                }
+                            }
+                            response.value = "response";
                         }
                         else
                         {
-                            response.target = (int)request.source;
-                            response.status = Status.ACCEPTED;
+                            response.target = request.source;
+                            response.status = Status.ERROR;
+                            response.value = "response";
                         }
-                        response.value = "response";
+
                         channel.Writer.TryWrite(response);
                     }
                 }
