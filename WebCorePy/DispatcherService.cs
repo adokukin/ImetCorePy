@@ -94,64 +94,98 @@ namespace WebCorePy
                         response.session = request.session;
                         response.source = 0;
 
-                        if (request.status == Status.NEW)
+                        switch (request.status) 
                         {
-                            if (request.source == null)
-                            {
-                                int slot = GetFreeSlot();
-                                response.target = slot;
-                                response.status = pool[slot].state == State.EMPTY ? Status.ACCEPTED : Status.BUSY;
-                            }
-                            else
-                            {
-                                int slot = (int)request.source;
-                                response.target = slot;
-                                switch(pool[slot].state)
+                            case Status.NEW:
+                                if (request.source == null)
                                 {
-                                    case State.READY:
-                                        response.status = Status.READY;
-                                        break;
-                                    case State.IN_PROGRESS:
-                                        response.status = Status.IN_PROGRESS;
-                                        break;
-                                    default:
+                                    int slot = GetFreeSlot();
+                                    response.target = slot;
+                                    if (pool[slot].state == State.EMPTY)
+                                    {
+                                        // TODO: start task
                                         response.status = Status.ACCEPTED;
-                                        break;
+                                    }
+                                    else
+                                    {
+                                        response.status = Status.BUSY;
+                                    }
                                 }
-                            }
-                            response.value = "response";
-                        }
-                        else if (request.status == Status.CHECK) 
-                        {
-                            if (request.source == null) 
-                            {
-                                response.target = null;
-                                response.status = Status.ERROR;
-                            }
-                            else
-                            {
-                                int slot = (int)request.source;
-                                response.target = slot;
-                                switch (pool[slot].state)
+                                else
                                 {
-                                    case State.READY:
-                                        response.status = Status.READY;
-                                        break;
-                                    case State.IN_PROGRESS:
-                                        response.status = Status.IN_PROGRESS;
-                                        break;
-                                    default:
-                                        response.status = Status.EMPTY;
-                                        break;
+                                    int slot = (int)request.source;
+                                    response.target = slot;
+                                    switch (pool[slot].state)
+                                    {
+                                        case State.READY:
+                                            response.status = Status.READY;
+                                            break;
+                                        case State.IN_PROGRESS:
+                                            response.status = Status.IN_PROGRESS;
+                                            break;
+                                        default:
+                                            response.status = Status.ACCEPTED;
+                                            break;
+                                    }
                                 }
-                            }
-                            response.value = "response";
-                        }
-                        else
-                        {
-                            response.target = request.source;
-                            response.status = Status.ERROR;
-                            response.value = "response";
+                                response.value = "response";
+                                break;
+                            case Status.CHECK:
+                                if (request.source == null)
+                                {
+                                    response.target = null;
+                                    response.status = Status.ERROR;
+                                }
+                                else
+                                {
+                                    int slot = (int)request.source;
+                                    response.target = slot;
+                                    switch (pool[slot].state)
+                                    {
+                                        case State.READY:
+                                            response.status = Status.READY;
+                                            break;
+                                        case State.IN_PROGRESS:
+                                            response.status = Status.IN_PROGRESS;
+                                            break;
+                                        default:
+                                            response.status = Status.EMPTY;
+                                            break;
+                                    }
+                                }
+                                response.value = "response";
+                                break;
+                            case Status.CLEAR:
+                                if (request.source == null)
+                                {
+                                    response.target = null;
+                                    response.status = Status.ERROR;
+                                }
+                                else
+                                {
+                                    int slot = (int)request.source;
+                                    response.target = slot;
+                                    switch (pool[slot].state)
+                                    {
+                                        case State.READY:
+                                            // TODO: delete files
+                                            break;
+                                        case State.IN_PROGRESS:
+                                            // TODO: stop calculation
+                                            // TODO: delete files
+                                            break;
+                                        default:
+                                            break;
+                                    }
+                                    response.status = Status.EMPTY;
+                                }
+                                response.value = "response";
+                                break;
+                            default:
+                                response.target = request.source;
+                                response.status = Status.ERROR;
+                                response.value = "response";
+                                break;
                         }
 
                         channel.Writer.TryWrite(response);

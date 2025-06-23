@@ -6,6 +6,7 @@ namespace WebCorePy
     {
         NEW = 0,
         CHECK,
+        CLEAR,
         ACCEPTED,
         BUSY,
         EMPTY,
