@@ -69,18 +69,18 @@ namespace WebCorePy
                             if (slot != null)
                             {
                                 response.target = (int)slot;
-                                response.status = Status.SUCCESS;
+                                response.status = Status.ACCEPTED;
                             }
                             else
                             {
                                 response.target = null;
-                                response.status = Status.ERROR;
+                                response.status = Status.BUSY;
                             }
                         }
                         else
                         {
                             response.target = (int)request.source;
-                            response.status = Status.SUCCESS;
+                            response.status = Status.ACCEPTED;
                         }
                         response.value = "response";
                         channel.Writer.TryWrite(response);

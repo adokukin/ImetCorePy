@@ -4,8 +4,12 @@ namespace WebCorePy
 {
     public enum Status
     {
-        SUCCESS = 0,
-        ERROR = 1
+        NEW = 0,
+        CHECK,
+        ACCEPTED,
+        BUSY,
+        IN_PROGRESS,
+        READY
     }
 
     public struct Message
@@ -15,7 +19,7 @@ namespace WebCorePy
         public int? target;
         public string session;
         public string value;
-        public Status? status;
+        public Status status;
     }
 
     public interface IChannelSingletonService

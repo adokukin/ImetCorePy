@@ -253,7 +253,7 @@ namespace WebCorePy.Controllers
             request.session = HttpContext.Session.Id;
             request.target = 0;
             request.value = "request";
-            request.status = null;
+            request.status = Status.NEW;
             
             channel.Writer.TryWrite(request);
 
@@ -287,7 +287,7 @@ namespace WebCorePy.Controllers
                                 // TODO: something is very wrong
                             }
 
-                            if ((response.target != null) && (response.status == Status.SUCCESS))
+                            if ((response.target != null) && (response.status == Status.ACCEPTED))
                             {
                                 HttpContext.Session.SetInt32("slot", (int)response.target);
                             }
