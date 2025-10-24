@@ -34,7 +34,7 @@ namespace WebCorePy
 
             for (int i = 0;i < pool.Length;i++)
             {
-                if (pool[i].state == State.EMPTY)
+                if (pool[i].state == WorkerState.EMPTY)
                 {
                     return i;
                 }
@@ -75,7 +75,7 @@ namespace WebCorePy
                                 {
                                     int slot = GetFreeSlot();
                                     response.target = slot;
-                                    if (pool[slot].state == State.EMPTY)
+                                    if (pool[slot].state == WorkerState.EMPTY)
                                     {
                                         // TODO: start task
                                         response.status = Status.ACCEPTED;
@@ -91,10 +91,10 @@ namespace WebCorePy
                                     response.target = slot;
                                     switch (pool[slot].state)
                                     {
-                                        case State.READY:
+                                        case WorkerState.READY:
                                             response.status = Status.READY;
                                             break;
-                                        case State.IN_PROGRESS:
+                                        case WorkerState.BUSY:
                                             response.status = Status.IN_PROGRESS;
                                             break;
                                         default:
@@ -116,10 +116,10 @@ namespace WebCorePy
                                     response.target = slot;
                                     switch (pool[slot].state)
                                     {
-                                        case State.READY:
+                                        case WorkerState.READY:
                                             response.status = Status.READY;
                                             break;
-                                        case State.IN_PROGRESS:
+                                        case WorkerState.BUSY:
                                             response.status = Status.IN_PROGRESS;
                                             break;
                                         default:
@@ -141,10 +141,10 @@ namespace WebCorePy
                                     response.target = slot;
                                     switch (pool[slot].state)
                                     {
-                                        case State.READY:
+                                        case WorkerState.READY:
                                             // TODO: delete files
                                             break;
-                                        case State.IN_PROGRESS:
+                                        case WorkerState.BUSY:
                                             // TODO: stop calculation
                                             // TODO: delete files
                                             break;
