@@ -14,16 +14,16 @@ namespace WebCorePy
         private Channel<Message> channel;
         private readonly ILogger logger;
 
-        private Processor[] pool;
+        private PoolWorker[] pool;
         public DispatcherService(IChannelSingletonService channelService, ILogger<DispatcherService> logger)
         {
             channel = channelService.channel;
             this.logger = logger;
 
-            pool = new Processor[NumProcessors];
+            pool = new PoolWorker[NumProcessors];
             for (int i = 0; i < pool.Length; i++)
             {
-                pool[i] = new Processor();
+                pool[i] = new PoolWorker();
             }
         }
 
