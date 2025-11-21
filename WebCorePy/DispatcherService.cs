@@ -34,7 +34,7 @@ namespace WebCorePy
 
             for (int i = 0;i < pool.Length;i++)
             {
-                if (pool[i].state == WorkerState.EMPTY)
+                if (pool[i].State == WorkerState.EMPTY)
                 {
                     return i;
                 }

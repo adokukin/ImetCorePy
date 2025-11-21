@@ -1,5 +1,6 @@
 ﻿using System;
-using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
@@ -28,6 +29,13 @@ namespace WebCorePy
         public int id;
         public decimal progress;
         public string[] output;
+
+        public WorkerResponse(int id, decimal progress, string[] output)
+        {
+            this.id = id;
+            this.progress = progress;
+            this.output = output;
+        }
     }
 
     public class PoolWorker
@@ -106,7 +114,27 @@ namespace WebCorePy
 
         private void Process() 
         {
-            // TODO: run process, manage process output, check _requests_queue 
+            int count = 0;
+            int total = 300;
+            List<string> messages = new List<string> ();
+            WorkerRequest request;
+
+            // TODO: run process, manage process output
+            while (!_cts.IsCancellationRequested && (count < total))
+            {
+                Thread.Sleep(1000);
+                count++;
+                // TODO: get process responses
+                messages.Append<string>(String.Format("remains {0} s", total - count));
+
+                // TODO: adjust waiting time
+                if (_request_buffer.TryReceive<WorkerRequest>(out request))
+                {
+                    WorkerResponse response = new WorkerResponse(request.id, (decimal)count / (decimal)total, messages.ToArray());
+                    _response_buffer.Post<WorkerResponse>(response);
+                    messages.Clear();
+                }
+            }
         }
     }
 }
