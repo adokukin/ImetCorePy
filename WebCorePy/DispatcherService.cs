@@ -30,20 +30,20 @@ namespace WebCorePy
         protected int GetFreeSlot()
         {
             int oldestProcessor = -1;
-            DateTime? minStarted = DateTime.MaxValue;
+            DateTime minStarted = DateTime.MaxValue;
 
             for (int i = 0;i < pool.Length;i++)
             {
-                if (pool[i].State == WorkerState.EMPTY)
+                DateTime? started = pool[i].start;
+                if (started == null)
                 {
                     return i;
                 }
                 else
                 {
-                    DateTime started = (DateTime)pool[i].start;
-                    if (started < minStarted)
+                    if ((DateTime)started < minStarted)
                     {
-                        minStarted = started;
+                        minStarted = (DateTime)started;
                         oldestProcessor = i;
                     }
                 }

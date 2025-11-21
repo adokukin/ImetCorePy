@@ -64,7 +64,7 @@ namespace WebCorePy
             _request_id = 0;
 
             process = null;
-            start = null;
+            start = null; // TODO: deal with thread safety
             end = null;
             file_train = null;
             file_test = null;
