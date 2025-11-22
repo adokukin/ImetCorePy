@@ -64,7 +64,7 @@ namespace WebCorePy
             _request_id = 0;
 
             process = null;
-            start = null; // TODO: deal with thread safety
+            start = null;
             end = null;
             file_train = null;
             file_test = null;
@@ -101,14 +101,16 @@ namespace WebCorePy
             Cancel(); // outside processor should prevent cancelling important tasks
             _cts = new CancellationTokenSource();
             _task = Task.Run(() => Process(), _cts.Token);
+            start = DateTime.Now;
         }
 
         public void Cancel()
         {
-            if (State != WorkerState.EMPTY)
+            if (start != null)
             {
                 _cts.Cancel();
                 _task = null;
+                start = null;
             }
         }
 

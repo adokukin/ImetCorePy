@@ -37,7 +37,7 @@ namespace WebCorePy
                 DateTime? started = pool[i].start;
                 if (started == null)
                 {
-                    return i;
+                    return i + 1;
                 }
                 else
                 {
@@ -73,23 +73,28 @@ namespace WebCorePy
                             case Status.NEW:
                                 if (request.source == null)
                                 {
-                                    int slot = GetFreeSlot();
-                                    response.target = slot;
-                                    if (pool[slot].state == WorkerState.EMPTY)
+                                    // other clients can't obtain slot inbetween processing (EMPTY->BUSY), 
+                                    // but it still can change its state from Busy to READY
+                                    lock (pool)
                                     {
-                                        // TODO: start task
-                                        response.status = Status.ACCEPTED;
-                                    }
-                                    else
-                                    {
-                                        response.status = Status.BUSY;
+                                        int slot = GetFreeSlot();
+                                        response.target = slot;
+                                        if (pool[slot].state == WorkerState.EMPTY)
+                                        {
+                                            pool[slot].Start();
+                                            response.status = Status.ACCEPTED;
+                                        }
+                                        else
+                                        {
+                                            response.status = Status.BUSY;
+                                        }
                                     }
                                 }
                                 else
                                 {
                                     int slot = (int)request.source;
                                     response.target = slot;
-                                    switch (pool[slot].state)
+                                    switch (pool[slot-1].State) // TODO: thread safety
                                     {
                                         case WorkerState.READY:
                                             response.status = Status.READY;
@@ -114,7 +119,7 @@ namespace WebCorePy
                                 {
                                     int slot = (int)request.source;
                                     response.target = slot;
-                                    switch (pool[slot].state)
+                                    switch (pool[slot-1].state)
                                     {
                                         case WorkerState.READY:
                                             response.status = Status.READY;
@@ -139,7 +144,7 @@ namespace WebCorePy
                                 {
                                     int slot = (int)request.source;
                                     response.target = slot;
-                                    switch (pool[slot].state)
+                                    switch (pool[slot-1].state)
                                     {
                                         case WorkerState.READY:
                                             // TODO: delete files
