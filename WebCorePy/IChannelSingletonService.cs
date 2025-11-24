@@ -4,14 +4,13 @@ namespace WebCorePy
 {
     public enum Status
     {
-        NEW = 0,
+        START = 0,
         CHECK,
         CLEAR,
-        ACCEPTED,
-        BUSY,
-        EMPTY,
-        IN_PROGRESS,
+
+        OK, // same as READY or IN_PROGRESS after a command 
         READY,
+        BUSY,
         ERROR
     }
 
@@ -21,7 +20,7 @@ namespace WebCorePy
         public int? source;
         public int? target;
         public string session;
-        public string value;
+        public WorkerResponse? value;
         public Status status;
     }
 

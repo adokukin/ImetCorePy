@@ -89,7 +89,7 @@ namespace WebCorePy
             }
         }
 
-        async Task<WorkerResponse> GetStatus()
+        public async Task<WorkerResponse> GetStatus()
         {
             _request_buffer.Post(new WorkerRequest(_request_id++));
             WorkerResponse response = await _response_buffer.ReceiveAsync();

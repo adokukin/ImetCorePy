@@ -61,111 +61,66 @@ namespace WebCorePy
                     if (channel.Reader.TryPeek(out candidate) && (candidate.target == 0))
                     {
                         Message request = await channel.Reader.ReadAsync();
-                        logger.LogInformation($"Read success {request.id}, {request.source} -> {request.target}, {request.session}, {request.value}");
+                        logger.LogInformation($"Read success {request.id}, {request.source} -> {request.target}, {request.session}");
 
                         Message response;
                         response.id = request.id;
                         response.session = request.session;
                         response.source = 0;
 
+                        int slot;
+                        if (request.source == null)
+                        {
+                            slot = GetFreeSlot(); // TODO: should there be error?
+                        }
+                        else
+                        {
+                            slot = (int)request.source;
+                        }
+                        response.target = slot;
+
                         switch (request.status) 
                         {
-                            case Status.NEW:
-                                if (request.source == null)
+                            case Status.START:
+                                // other clients can't obtain slot inbetween processing (EMPTY->BUSY), 
+                                // but it still can change its state from BUSY to READY
+                                lock (pool)
                                 {
-                                    // other clients can't obtain slot inbetween processing (EMPTY->BUSY), 
-                                    // but it still can change its state from Busy to READY
-                                    lock (pool)
+                                    if (pool[slot].state == WorkerState.EMPTY)
                                     {
-                                        int slot = GetFreeSlot();
-                                        response.target = slot;
-                                        if (pool[slot].state == WorkerState.EMPTY)
-                                        {
-                                            pool[slot].Start();
-                                            response.status = Status.ACCEPTED;
-                                        }
-                                        else
-                                        {
-                                            response.status = Status.BUSY;
-                                        }
+                                        pool[slot].Start();
+                                        response.status = Status.OK;
+                                    }
+                                    else
+                                    {
+                                        response.status = Status.BUSY;
                                     }
                                 }
-                                else
-                                {
-                                    int slot = (int)request.source;
-                                    response.target = slot;
-                                    switch (pool[slot-1].State) // TODO: thread safety
-                                    {
-                                        case WorkerState.READY:
-                                            response.status = Status.READY;
-                                            break;
-                                        case WorkerState.BUSY:
-                                            response.status = Status.IN_PROGRESS;
-                                            break;
-                                        default:
-                                            response.status = Status.ACCEPTED;
-                                            break;
-                                    }
-                                }
-                                response.value = "response";
                                 break;
-                            case Status.CHECK:
-                                if (request.source == null)
-                                {
-                                    response.target = null;
-                                    response.status = Status.ERROR;
-                                }
-                                else
-                                {
-                                    int slot = (int)request.source;
-                                    response.target = slot;
-                                    switch (pool[slot-1].state)
-                                    {
-                                        case WorkerState.READY:
-                                            response.status = Status.READY;
-                                            break;
-                                        case WorkerState.BUSY:
-                                            response.status = Status.IN_PROGRESS;
-                                            break;
-                                        default:
-                                            response.status = Status.EMPTY;
-                                            break;
-                                    }
-                                }
-                                response.value = "response";
-                                break;
+
                             case Status.CLEAR:
-                                if (request.source == null)
+                                lock (pool)
                                 {
-                                    response.target = null;
-                                    response.status = Status.ERROR;
+                                    pool[slot].Cancel(); // TODO: is it ok to cancel running task?
+                                    response.status = Status.OK;
                                 }
-                                else
-                                {
-                                    int slot = (int)request.source;
-                                    response.target = slot;
-                                    switch (pool[slot-1].state)
-                                    {
-                                        case WorkerState.READY:
-                                            // TODO: delete files
-                                            break;
-                                        case WorkerState.BUSY:
-                                            // TODO: stop calculation
-                                            // TODO: delete files
-                                            break;
-                                        default:
-                                            break;
-                                    }
-                                    response.status = Status.EMPTY;
-                                }
-                                response.value = "response";
                                 break;
+
                             default:
-                                response.target = request.source;
-                                response.status = Status.ERROR;
-                                response.value = "response";
+                                switch (pool[slot - 1].State) // TODO: thread safety
+                                {
+                                    case WorkerState.BUSY:
+                                        response.status = Status.BUSY;
+                                        break;
+                                    default:
+                                        response.status = Status.READY;
+                                        break;
+                                }
                                 break;
                         }
+
+
+                        response.value = await pool[slot - 1].GetStatus();
 
                         channel.Writer.TryWrite(response);
                     }
