@@ -32,7 +32,7 @@ namespace WebCorePy
             int oldestProcessor = -1;
             DateTime minStarted = DateTime.MaxValue;
 
-            for (int i = 0;i < pool.Length;i++)
+            for (int i = 0; i < pool.Length; i++)
             {
                 DateTime? started = pool[i].start;
                 if (started == null)
@@ -57,7 +57,8 @@ namespace WebCorePy
             while (!stoppingToken.IsCancellationRequested)
             {
                 bool available = await channel.Reader.WaitToReadAsync(stoppingToken);
-                if (available && channel.Reader.CanPeek) {
+                if (available && channel.Reader.CanPeek)
+                {
                     if (channel.Reader.TryPeek(out candidate) && (candidate.target == 0))
                     {
                         Message request = await channel.Reader.ReadAsync();
@@ -79,7 +80,7 @@ namespace WebCorePy
                         }
                         response.target = slot;
 
-                        switch (request.status) 
+                        switch (request.status)
                         {
                             case Status.START:
                                 // other clients can't obtain slot inbetween processing (EMPTY->BUSY), 
@@ -118,13 +119,19 @@ namespace WebCorePy
                                 }
                                 break;
                         }
-
+                        logger.LogInformation($"Processed {response.id}, {response.source} -> {response.target}, {response.status}");
 
                         response.value = await pool[slot - 1].GetStatus();
+                        logger.LogInformation($"Status {response.value.ToString()}");
 
                         channel.Writer.TryWrite(response);
                     }
                 }
+            }
+
+            for (int i = 0; i < pool.Length; i++)
+            {
+                pool[i].Cancel();
             }
         }
     }

@@ -56,8 +56,8 @@ namespace WebCorePy
      
         public PoolWorker()
         {
-            _task = null;
-            _cts = null;
+            _cts = new CancellationTokenSource();
+            _task = Task.Run(() => Process(), _cts.Token); // should run always to process status request
 
             _request_buffer = new BufferBlock<WorkerRequest>();
             _response_buffer = new BufferBlock<WorkerResponse>();
@@ -74,17 +74,20 @@ namespace WebCorePy
         {
             get 
             {
-                if (_task == null)
-                {
-                    return WorkerState.EMPTY;
-                }
-                else if (_task.IsCompleted) 
+                if (end != null)
                 {
                     return WorkerState.READY;
                 }
                 else
                 {
-                    return WorkerState.BUSY;
+                    if (start == null)
+                    {
+                        return WorkerState.EMPTY;
+                    }
+                    else 
+                    {
+                        return WorkerState.BUSY;
+                    }
                 }
             }
         }
@@ -98,20 +101,30 @@ namespace WebCorePy
 
         public void Start()
         {
-            Cancel(); // outside processor should prevent cancelling important tasks
-            _cts = new CancellationTokenSource();
-            _task = Task.Run(() => Process(), _cts.Token);
+            // outside processor should deal with data integrity
+            // TODO: run calculating process
             start = DateTime.Now;
+            end = null;
+        }
+
+        public void Stop()
+        {
+            // TODO: stop calculating process
+            start = null;
+            end = null;
+        }
+
+        public void Restart()
+        {
+            Stop();
+            Start();
         }
 
         public void Cancel()
         {
-            if (start != null)
-            {
-                _cts.Cancel();
-                _task = null;
-                start = null;
-            }
+            // stop this thread
+            Stop();
+            _cts.Cancel();
         }
 
         private void Process() 
@@ -127,7 +140,7 @@ namespace WebCorePy
                 Thread.Sleep(1000);
                 count++;
                 // TODO: get process responses
-                messages.Append<string>(String.Format("remains {0} s", total - count));
+                messages.Append<string>($"remains {total - count} s");
 
                 // TODO: adjust waiting time
                 if (_request_buffer.TryReceive<WorkerRequest>(out request))

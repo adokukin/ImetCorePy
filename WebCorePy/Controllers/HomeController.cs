@@ -280,7 +280,7 @@ namespace WebCorePy.Controllers
                             }
                             else if (response.id == request.id)
                             {
-                                ViewBag.Msg = $"<div class=\"alert alert-success\" role=\"alert\">Запуск обработчика {response.target} для {request.session}, ids {request.id} - {response.id}, status {response.status}</div>";
+                                ViewBag.Msg = $"<div class=\"alert alert-success\" role=\"alert\">Проверка обработчика {response.target} для {request.session}, ids {request.id} - {response.id}, status {response.status}</div>";
                             }
                             else 
                             {
