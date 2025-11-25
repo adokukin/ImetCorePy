@@ -77,6 +77,11 @@
         </div>
 
     </form>
-    <component type="typeof(Counter)" render-mode="ServerPrerendered" />
+
+    <form method="get" asp-controller="JobStatus" asp-action="Index">
+        <input type="submit" value="Проверить">
+    </form>
+
+    <component type="typeof(JobStatus)" render-mode="ServerPrerendered" />
 
 </div>

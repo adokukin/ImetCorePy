@@ -10,7 +10,6 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
-using Microsoft.VisualStudio.Web.CodeGeneration.Contracts.Messaging;
 using WebCorePy.Models;
 
 namespace WebCorePy.Controllers
@@ -30,7 +29,6 @@ namespace WebCorePy.Controllers
             this.config = config;
             this.channel = channelService.channel;
         }
-
 
         public IActionResult Index()
         {
@@ -197,8 +195,6 @@ namespace WebCorePy.Controllers
             return ViewBag.Methods = sb.ToString();
         }
 
-
-
         private string GetAllAlgorithmsJson() {
             return string.Join($",{Environment.NewLine}", Algorithms);
         }
@@ -290,6 +286,15 @@ namespace WebCorePy.Controllers
             return response;
         }
 
+        [HttpGet("JobStatus")]
+        public async Task<IActionResult> Get()
+        {
+            Message response = await RequestDispatcher(Status.CHECK);
+            String msg = $"<div class=\"alert alert-success\" role=\"alert\">Проверка обработчика {response.target} для {HttpContext.Session.Id}, id {response.id}, status {response.status}</div>";
+
+            return Json(new { message = msg });
+        }
+        
         /// <summary>
         /// Основные вычисления
         /// </summary>

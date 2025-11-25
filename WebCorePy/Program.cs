@@ -32,6 +32,10 @@ builder.Services.AddControllersWithViews()
     .AddNewtonsoftJson();
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
+builder.Services.AddHttpClient("local", client =>
+{
+    client.BaseAddress = new Uri("http://");
+});
 
 var app = builder.Build();
 if (app.Environment.IsDevelopment())

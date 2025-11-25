@@ -1,0 +1,26 @@
+﻿@using System.Net.Http.Json
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+
+<h1>Состояние обработчика</h1>
+
+@if (reply != null)
+{
+    @((MarkupString)reply.message)
+}
+
+<button class="btn btn-primary" @onclick="Check">Update</button>
+
+@code {
+    class JobStatusReply
+    {
+        public String message { get; set; }
+    }
+
+    private JobStatusReply reply = null;
+
+    private async Task Check()
+    {
+        reply = await Http.GetFromJsonAsync<JobStatusReply>(NavigationManager.ToAbsoluteUri("JobStatus"));
+    }
+}
