@@ -31,6 +31,7 @@ builder.Services.AddSession(options =>
 builder.Services.AddControllersWithViews()
     .AddNewtonsoftJson();
 builder.Services.AddRazorPages();
+builder.Services.AddServerSideBlazor();
 
 var app = builder.Build();
 if (app.Environment.IsDevelopment())
@@ -58,6 +59,7 @@ app.MapControllerRoute(
         pattern: "{controller=Home}/{action=Index}/{id?}"
 );
 app.MapRazorPages();
+app.MapBlazorHub();
 
 System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 

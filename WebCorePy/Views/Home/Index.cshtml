@@ -1,8 +1,10 @@
 ﻿@using Microsoft.AspNetCore.Http
+@using WebCorePy.Views.Shared
 @inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
 @{
     ViewData["Title"] = "Main Page";
 }
+
 <div class="text-center">
     <h1 class="display-4">Прогноз значений непрерывных величин</h1>
     <p>Загрузите <a href="/Home/Format">данные в формате Excel / CSV</a> и нажмите кпопку "Обработать".</p>
@@ -75,5 +77,6 @@
         </div>
 
     </form>
+    <component type="typeof(Counter)" render-mode="ServerPrerendered" />
 
 </div>
