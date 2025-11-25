@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+using Microsoft.VisualStudio.Web.CodeGeneration.Contracts.Messaging;
 using WebCorePy.Models;
 
 namespace WebCorePy.Controllers
@@ -228,17 +229,10 @@ namespace WebCorePy.Controllers
                 ;
         }
 
-        /// <summary>
-        /// Основные вычисления
-        /// </summary>
-        /// <param name="fileTrain">файл для обучения</param>
-        /// <param name="filePredict">файл для тестирования</param>
-        /// <returns></returns>
-        [HttpPost("UploadFiles")]
-        public async Task<IActionResult> Post(List<IFormFile> fileTrain, List<IFormFile> filePredict, string timeout)
+        private async ValueTask<Message> RequestDispatcher(Status status)
         {
             Message candidate;
-            Message response;
+            Message response = new Message();
 
             Message request;
 
@@ -251,14 +245,12 @@ namespace WebCorePy.Controllers
 
             request.session = HttpContext.Session.Id;
             request.target = 0;
-            request.value = null;
-            request.status = Status.CHECK;
-            // TODO: replace with automatic CHECK and different result: empty, continue checking, results
-            
+            request.value = null; // TODOÑ send parameters when needed
+            request.status = status;
+
             channel.Writer.TryWrite(request);
 
             bool responded = false;
-
             while (!responded)
             {
                 // TODO: cancellation condition
@@ -272,33 +264,44 @@ namespace WebCorePy.Controllers
                             ((candidate.session == request.session) || (candidate.target == request.source)))
                         {
                             response = await channel.Reader.ReadAsync();
-                            responded = true;
-                            if (response.id < request.id)
-                            {
-                                // skip missed messages
-                                // TODO: someone also has to clean lost messages, i.e. browser sent and broke before reading
-                            }
-                            else if (response.id == request.id)
-                            {
-                                ViewBag.Msg = $"<div class=\"alert alert-success\" role=\"alert\">Проверка обработчика {response.target} для {request.session}, ids {request.id} - {response.id}, status {response.status}</div>";
-                            }
-                            else 
-                            {
-                                // TODO: something is very wrong
-                            }
 
-                            if ((response.target != null) && (response.status == Status.OK))
+                            if (response.id == request.id)
                             {
-                                HttpContext.Session.SetInt32("slot", (int)response.target);
+                                if (slot == null)
+                                {
+                                    HttpContext.Session.SetInt32("slot", (int)response.target);
+                                }
+                                else if ((int)slot != response.target)
+                                {
+                                    // TODO: deal with error
+                                    Console.WriteLine(@"Error: wrong responded to {response.target} instead of {slot}");
+                                }
+                                responded = true;
                             }
                             else
                             {
-                                // TODO: process Status.ERROR
+                                // TODO: deal with possible errors
                             }
                         }
                     }
                 }
             }
+
+            return response;
+        }
+
+        /// <summary>
+        /// Основные вычисления
+        /// </summary>
+        /// <param name="fileTrain">файл для обучения</param>
+        /// <param name="filePredict">файл для тестирования</param>
+        /// <returns></returns>
+        [HttpPost("UploadFiles")]
+        public async Task<IActionResult> Post(List<IFormFile> fileTrain, List<IFormFile> filePredict, string timeout)
+        {
+            Message response = await RequestDispatcher(Status.CHECK);
+            ViewBag.Msg = $"<div class=\"alert alert-success\" role=\"alert\">Проверка обработчика {response.target} для {HttpContext.Session.Id}, id {response.id}, status {response.status}</div>";
+
             return View("Index");
 
 

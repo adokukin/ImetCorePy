@@ -22,6 +22,16 @@ namespace WebCorePy
         public string session;
         public WorkerResponse? value;
         public Status status;
+
+        public Message()
+        {
+            id = 0; 
+            source = null;
+            target = null;
+            session = null;
+            value = null;
+            status = Status.ERROR;
+        }
     }
 
     public interface IChannelSingletonService
