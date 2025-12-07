@@ -270,7 +270,7 @@ namespace WebCorePy.Controllers
                                 else if ((int)slot != response.target)
                                 {
                                     // TODO: deal with error
-                                    Console.WriteLine(@"Error: wrong responded to {response.target} instead of {slot}");
+                                    Console.WriteLine(@"Error: wrong response target {response.target} instead of {slot}");
                                 }
                                 responded = true;
                             }
@@ -291,8 +291,18 @@ namespace WebCorePy.Controllers
         {
             Message response = await RequestDispatcher(Status.CHECK);
             String msg = $"<div class=\"alert alert-success\" role=\"alert\">Проверка обработчика {response.target} для {HttpContext.Session.Id}, id {response.id}, status {response.status}</div>";
+            Decimal progress = 0;
+            string[] output = [];
+            int? slot = response.target;
 
-            return Json(new { message = msg });
+            if (response.value != null) 
+            {
+                WorkerResponse value = (WorkerResponse)(response.value);
+                progress = value.progress;
+                output = value.output;
+            }
+
+            return Json(new { message = msg, progress = progress, output = output , slot = slot});
         }
         
         /// <summary>
