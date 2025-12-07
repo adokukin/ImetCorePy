@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
@@ -140,7 +139,7 @@ namespace WebCorePy
                 Thread.Sleep(1000);
                 count++;
                 // TODO: get process responses
-                messages.Append<string>($"remains {total - count} s");
+                messages.Add($"remains {total - count} s");
 
                 // TODO: adjust waiting time
                 if (_request_buffer.TryReceive<WorkerRequest>(out request))
