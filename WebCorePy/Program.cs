@@ -31,6 +31,11 @@ builder.Services.AddSession(options =>
 builder.Services.AddControllersWithViews()
     .AddNewtonsoftJson();
 builder.Services.AddRazorPages();
+builder.Services.AddServerSideBlazor();
+builder.Services.AddHttpClient("local", client =>
+{
+    client.BaseAddress = new Uri("http://");
+});
 
 var app = builder.Build();
 if (app.Environment.IsDevelopment())
@@ -58,6 +63,7 @@ app.MapControllerRoute(
         pattern: "{controller=Home}/{action=Index}/{id?}"
 );
 app.MapRazorPages();
+app.MapBlazorHub();
 
 System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 
