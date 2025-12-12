@@ -9,6 +9,116 @@
     <IsTransformWebConfigDisabled>false</IsTransformWebConfigDisabled>
   </PropertyGroup>
 
+  <ItemGroup>
+    <None Remove="py\!run.template.bat" />
+    <None Remove="py\!run.template.new" />
+    <None Remove="py\!run.template.old" />
+    <None Remove="py\!settings.full" />
+    <None Remove="py\!update.bat" />
+    <None Remove="py\convexforest.py" />
+    <None Remove="py\convexforest_crossval.py" />
+    <None Remove="py\dummy.py" />
+    <None Remove="py\fragment_r_03.py" />
+    <None Remove="py\fragment_r_03.vic.py" />
+    <None Remove="py\inmc3\classifier.py" />
+    <None Remove="py\inmc3\inspector.py" />
+    <None Remove="py\inmc3\storage.py" />
+    <None Remove="py\inmc3\trainer.py" />
+    <None Remove="py\inmc3\utils.py" />
+    <None Remove="py\inmc3\__init__.py" />
+    <None Remove="py\regressor.py" />
+    <None Remove="py\regressor0.py" />
+    <None Remove="py\regressor1.py" />
+    <None Remove="py\regressor2.py" />
+    <None Remove="py\regressor3.py" />
+    <None Remove="py\regressor4.py" />
+    <None Remove="py\runEvalOnly.bat" />
+    <None Remove="py\runEvalPredict.bat" />
+    <None Remove="py\sand3_09.py" />
+    <None Remove="py\sandRegressor_134spinel.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="py\!run.template.bat">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="py\!run.template.new">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="py\!run.template.old">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="py\!settings.full">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="py\!update.bat">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="py\convexforest.py">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="py\convexforest_crossval.py">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="py\dummy.py">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="py\fragment_r_03.py">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="py\fragment_r_03.vic.py">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="py\inmc3\classifier.py">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="py\inmc3\inspector.py">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="py\inmc3\storage.py">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="py\inmc3\trainer.py">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="py\inmc3\utils.py">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="py\inmc3\__init__.py">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="py\regressor.py">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="py\regressor0.py">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="py\regressor1.py">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="py\regressor2.py">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="py\regressor3.py">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="py\regressor4.py">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="py\runEvalOnly.bat">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="py\runEvalPredict.bat">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="py\sand3_09.py">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="py\sandRegressor_134spinel.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="3.0.0-preview4-19216-03" />
