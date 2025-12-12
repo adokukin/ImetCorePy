@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
@@ -46,13 +47,16 @@ namespace WebCorePy
 
         private int _request_id;
 
-        public string process; // TODO: proper type
+        Process process;
         public WorkerState state;
         public DateTime? start;
         public DateTime? end;
         public string file_train;
         public string file_test;
-     
+
+        List<string> messages;
+        decimal progress;
+
         public PoolWorker()
         {
             _cts = new CancellationTokenSource();
@@ -100,15 +104,44 @@ namespace WebCorePy
 
         public void Start()
         {
-            // outside processor should deal with data integrity
-            // TODO: run calculating process
+            messages = new List<string>();
+            progress = 0;
+            
             start = DateTime.Now;
             end = null;
+
+            ProcessStartInfo info = new ProcessStartInfo
+            {
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true,
+                FileName = "py",
+                Arguments = "-3 py/dummy.py"
+            };
+
+            // outside processor should deal with data integrity
+            process = new Process();
+            process.StartInfo = info;
+            process.OutputDataReceived += (sender, line) => messages.Add(line.Data);
+            process.ErrorDataReceived += (sender, line) => Decimal.TryParse(line.Data, out progress);
+            var res = process.Start();
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
+
+            process.WaitForExit();
+
+            process.CancelOutputRead();
+            process.CancelErrorRead();
+
+            start = null;
+            end = DateTime.Now;
         }
 
         public void Stop()
         {
-            // TODO: stop calculating process
+            process.Kill();
+
             start = null;
             end = null;
         }
@@ -128,23 +161,14 @@ namespace WebCorePy
 
         private void Process() 
         {
-            int count = 0;
-            int total = 300;
-            List<string> messages = new List<string> ();
             WorkerRequest request;
 
             // TODO: run process, manage process output
-            while (!_cts.IsCancellationRequested && (count < total))
+            while (!_cts.IsCancellationRequested)
             {
-                Thread.Sleep(1000);
-                count++;
-                // TODO: get process responses
-                messages.Add($"remains {total - count} s");
-
-                // TODO: adjust waiting time
                 if (_request_buffer.TryReceive<WorkerRequest>(out request))
                 {
-                    WorkerResponse response = new WorkerResponse(request.id, (decimal)count / (decimal)total, messages.ToArray());
+                    WorkerResponse response = new WorkerResponse(request.id, progress, messages.ToArray());
                     _response_buffer.Post<WorkerResponse>(response);
                     messages.Clear();
                 }
