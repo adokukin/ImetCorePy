@@ -54,16 +54,16 @@ namespace WebCorePy
         public string file_train;
         public string file_test;
 
-        List<string> messages;
+        List<string> messages = new List<string>();
         decimal progress;
 
         public PoolWorker()
         {
             _cts = new CancellationTokenSource();
-            _task = Task.Run(() => Process(), _cts.Token); // should run always to process status request
 
             _request_buffer = new BufferBlock<WorkerRequest>();
             _response_buffer = new BufferBlock<WorkerResponse>();
+            _task = Task.Run(() => Process(), _cts.Token);
             _request_id = 0;
 
             process = null;
