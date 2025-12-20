@@ -1,4 +1,8 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -6,10 +10,6 @@ using System.Text;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
 using WebCorePy.Models;
 
 namespace WebCorePy.Controllers
@@ -144,7 +144,7 @@ namespace WebCorePy.Controllers
         public string[] Algorithms {
             get {
                 if (algorithms == null)
-                    algorithms = System.IO.File.ReadAllText(env.WebRootPath + "\\py\\!algorithms.template.json", Encoding.GetEncoding(866)).Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
+                    algorithms = System.IO.File.ReadAllText(env.WebRootPath + "\\js\\!algorithms.template.json", Encoding.GetEncoding(866)).Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
                 return algorithms;
             }
         }
@@ -225,12 +225,12 @@ namespace WebCorePy.Controllers
                 ;
         }
 
-        private async ValueTask<Message> RequestDispatcher(Status status)
+        private async ValueTask<Message> RequestDispatcher(WorkerCommand command, WorkerRequest? data=null)
         {
             Message candidate;
             Message response = new Message();
 
-            Message request;
+            Message request = new Message();
 
             int? id = HttpContext.Session.GetInt32("id");
             request.id = id == null ? 1 : (int)id + 1;
@@ -241,8 +241,7 @@ namespace WebCorePy.Controllers
 
             request.session = HttpContext.Session.Id;
             request.target = 0;
-            request.value = null; // TODOÑ send parameters when needed
-            request.status = status;
+            request.request = new WorkerRequest(command);
 
             channel.Writer.TryWrite(request);
 
@@ -289,20 +288,25 @@ namespace WebCorePy.Controllers
         [HttpGet("JobStatus")]
         public async Task<IActionResult> Get()
         {
-            Message response = await RequestDispatcher(Status.CHECK);
-            String msg = $"<div class=\"alert alert-success\" role=\"alert\">Проверка обработчика {response.target} для {HttpContext.Session.Id}, id {response.id}, status {response.status}</div>";
+            Message response = await RequestDispatcher(WorkerCommand.CHECK);
+            WorkerResponse workerResponse = (WorkerResponse)response.response;
+            String msg = $"<div class=\"alert alert-success\" role=\"alert\">Проверка обработчика {response.target} для {HttpContext.Session.Id}, id {response.id}, state {workerResponse.state}</div>";
+            WorkerResult? result = null;
+            WorkerState? state = null;
             Decimal progress = 0;
             string[] output = [];
             int? slot = response.target;
 
-            if (response.value != null) 
+            if (response.response != null) 
             {
-                WorkerResponse value = (WorkerResponse)(response.value);
+                WorkerResponse value = (WorkerResponse)(response.response);
+                result = value.result;
+                state = value.state;
                 progress = value.progress;
                 output = value.output;
             }
 
-            return Json(new { message = msg, progress = progress, output = output , slot = slot});
+            return Json(new { result = result, state = state, message = msg, progress = progress, output = output , slot = slot});
         }
         
         /// <summary>
@@ -314,8 +318,9 @@ namespace WebCorePy.Controllers
         [HttpPost("UploadFiles")]
         public async Task<IActionResult> Post(List<IFormFile> fileTrain, List<IFormFile> filePredict, string timeout)
         {
-            Message response = await RequestDispatcher(Status.CHECK);
-            ViewBag.Msg = $"<div class=\"alert alert-success\" role=\"alert\">Проверка обработчика {response.target} для {HttpContext.Session.Id}, id {response.id}, status {response.status}</div>";
+            Message response = await RequestDispatcher(WorkerCommand.CHECK);
+            WorkerResponse workerResponse = (WorkerResponse)response.response;
+            ViewBag.Msg = $"<div class=\"alert alert-success\" role=\"alert\">Проверка обработчика {response.target} для {HttpContext.Session.Id}, id {response.id}, state {workerResponse.state}</div>";
 
             return View("Index");
 

@@ -2,26 +2,15 @@
 
 namespace WebCorePy
 {
-    public enum Status
-    {
-        START = 0,
-        CHECK,
-        CLEAR,
-
-        OK, // same as READY or IN_PROGRESS after a command 
-        READY,
-        BUSY,
-        ERROR
-    }
-
     public struct Message
     {
         public int id;
         public int? source;
         public int? target;
         public string session;
-        public WorkerResponse? value;
-        public Status status;
+
+        public WorkerRequest? request;
+        public WorkerResponse? response;
 
         public Message()
         {
@@ -29,8 +18,9 @@ namespace WebCorePy
             source = null;
             target = null;
             session = null;
-            value = null;
-            status = Status.ERROR;
+
+            request = null;
+            response = null;
         }
     }
 

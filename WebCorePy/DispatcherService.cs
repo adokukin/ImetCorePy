@@ -64,7 +64,7 @@ namespace WebCorePy
                         Message request = await channel.Reader.ReadAsync();
                         logger.LogInformation($"Read success {request.id}, {request.source} -> {request.target}, {request.session}");
 
-                        Message response;
+                        Message response = new Message();
                         response.id = request.id;
                         response.session = request.session;
                         response.source = 0;
@@ -80,50 +80,16 @@ namespace WebCorePy
                         }
                         response.target = slot;
 
-                        switch (request.status)
+                        if (request.request == null)
                         {
-                            case Status.START:
-                                // other clients can't obtain slot inbetween processing (EMPTY->BUSY), 
-                                // but it still can change its state from BUSY to READY
-                                lock (pool)
-                                {
-                                    if (pool[slot].state == WorkerState.EMPTY)
-                                    {
-                                        pool[slot].Start();
-                                        response.status = Status.OK;
-                                    }
-                                    else
-                                    {
-                                        response.status = Status.BUSY;
-                                    }
-                                }
-                                break;
-
-                            case Status.CLEAR:
-                                lock (pool)
-                                {
-                                    pool[slot].Cancel(); // TODO: is it ok to cancel running task?
-                                    response.status = Status.OK;
-                                }
-                                break;
-
-                            default:
-                                switch (pool[slot - 1].State) // TODO: thread safety
-                                {
-                                    case WorkerState.BUSY:
-                                        response.status = Status.BUSY;
-                                        break;
-                                    default:
-                                        response.status = Status.READY;
-                                        break;
-                                }
-                                break;
+                            throw new InvalidOperationException();
                         }
-                        logger.LogInformation($"Processed {response.id}, {response.source} -> {response.target}, {response.status}");
+                        WorkerRequest workerRequest = (WorkerRequest)(request.request);
+                        workerRequest.id = request.id;
+                        response.response = await pool[slot - 1].Command(workerRequest);
 
-                        response.value = await pool[slot - 1].GetStatus();
-                        logger.LogInformation($"Status {response.value.ToString()}");
-
+                        WorkerResponse workerResponse = (WorkerResponse)(response.response);
+                        logger.LogInformation($"Processed {response.id}, {response.source} -> {response.target}, {workerResponse.state}");
                         channel.Writer.TryWrite(response);
                     }
                 }

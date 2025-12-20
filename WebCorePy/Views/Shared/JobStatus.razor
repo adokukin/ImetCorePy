@@ -2,22 +2,35 @@
 @inject HttpClient Http
 @inject NavigationManager NavigationManager
 
-<h1>Состояние обработчика</h1>
-
 @if (reply != null)
 {
-    <div class="form-group">
-        @((MarkupString)reply.message)
-        <div>Обработчик: @(reply.slot)</div>
-        <div class="progress">
-            <div id="workerProgress" class="progress-bar" role="progressbar" style="width: @((reply.progress * 100).ToString("0"))%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
-                @((reply.progress * 100).ToString("0.0"))%
+    @((MarkupString)reply.message)
+    <div>Обработчик: @(reply.slot)</div>
+
+    @if (reply.state == WorkerState.READY)
+    {
+        <div>Сюда перенести форму запуска</div>
+    }
+
+    @if (reply.state == WorkerState.BUSY)
+    {
+        <h1>Состояние обработчика</h1>
+        <div class="form-group">
+            <div class="progress">
+                <div id="workerProgress" class="progress-bar" role="progressbar" style="width: @((reply.progress * 100).ToString("0"))%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                    @((reply.progress * 100).ToString("0.0"))%
+                </div>
             </div>
         </div>
-        <label for="workerOutput" class="form-label">Вывод процесса</label>
-        <textarea @bind="reply.combined" class="form-control" id="workerOutput" rows="10" readonly>
-        </textarea>
-    </div>
+    }
+
+    @if (reply.state == WorkerState.READY)
+    {
+        <div class="form-group">
+            <label for="workerOutput" class="form-label">Вывод процесса</label>
+            <textarea @bind="reply.combined" class="form-control" id="workerOutput" rows="10" readonly></textarea>
+        </div>
+    }
 }
 
 <button class="btn btn-primary" @onclick="Check">Update</button>
@@ -25,6 +38,7 @@
 @code {
     class JobStatusReply
     {
+        public WorkerState? state { get; set; }
         public String message { get; set; }
         public decimal progress { get; set; }
         public int? slot { get; set; }

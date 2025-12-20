@@ -7,6 +7,20 @@ using System.Threading.Tasks.Dataflow;
 
 namespace WebCorePy
 {
+    public enum WorkerCommand
+    {
+        CHECK,
+        START,
+        STOP,
+        CLEAR
+    }
+
+    public enum WorkerResult
+    {
+        SUCCESS,
+        ERROR
+    }
+
     public enum WorkerState
     {
         EMPTY,
@@ -17,22 +31,34 @@ namespace WebCorePy
     public struct WorkerRequest
     {
         public int id;
+        public WorkerCommand command;
 
-        public WorkerRequest(int id)
+        // TODO: tables
+        // TODO: methods
+        // TODO: cross-validation setup
+
+        public WorkerRequest(WorkerCommand command)
         {
-            this.id = id;
+            this.id = 0;
+            this.command = command;
         }
     }
 
     public struct WorkerResponse
     {
         public int id;
+        public WorkerResult result;
+        public WorkerState state;
+
         public decimal progress;
         public string[] output;
 
-        public WorkerResponse(int id, decimal progress, string[] output)
+        public WorkerResponse(int id, WorkerResult result, WorkerState state, decimal progress, string[] output)
         {
             this.id = id;
+            this.result = result;
+            this.state = state;
+
             this.progress = progress;
             this.output = output;
         }
@@ -64,7 +90,7 @@ namespace WebCorePy
             _request_buffer = new BufferBlock<WorkerRequest>();
             _response_buffer = new BufferBlock<WorkerResponse>();
             _task = Task.Run(() => Process(), _cts.Token);
-            _request_id = 0;
+            _request_id = 0; // TODO: do we need independent message count in workers? Remove if not.
 
             process = null;
             start = null;
@@ -95,9 +121,9 @@ namespace WebCorePy
             }
         }
 
-        public async Task<WorkerResponse> GetStatus()
+        public async Task<WorkerResponse> Command(WorkerRequest request)
         {
-            _request_buffer.Post(new WorkerRequest(_request_id++));
+            _request_buffer.Post(request);
             WorkerResponse response = await _response_buffer.ReceiveAsync();
             return response;
         }
@@ -168,7 +194,8 @@ namespace WebCorePy
             {
                 if (_request_buffer.TryReceive<WorkerRequest>(out request))
                 {
-                    WorkerResponse response = new WorkerResponse(request.id, progress, messages.ToArray());
+                    // TODO: check command and call a method accordingly
+                    WorkerResponse response = new WorkerResponse(request.id, WorkerResult.SUCCESS, State, progress, messages.ToArray());
                     _response_buffer.Post<WorkerResponse>(response);
                     messages.Clear();
                 }
