@@ -306,7 +306,7 @@ namespace WebCorePy.Controllers
                 output = value.output;
             }
 
-            return Json(new { result = result, state = state, message = msg, progress = progress, output = output , slot = slot});
+            return Json(new { result = result, state = state, message = msg, progress = progress, output = output, slot = slot});
         }
         
         /// <summary>

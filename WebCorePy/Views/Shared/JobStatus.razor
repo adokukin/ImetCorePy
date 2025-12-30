@@ -7,9 +7,34 @@
     @((MarkupString)reply.message)
     <div>Обработчик: @(reply.slot)</div>
 
-    @if (reply.state == WorkerState.READY)
+    @if ((reply.state == WorkerState.EMPTY) || (reply.state == WorkerState.READY))
     {
-        <div>Сюда перенести форму запуска</div>
+        <form method="post" enctype="multipart/form-data" asp-controller="UploadFiles" asp-action="Index">
+            <div class="form-group">
+                <div class="col-md-12">
+                    <div class="container">
+                        <div class="row justify-content-start text-left">
+                            <div class="col border py-2">
+                                @if (fileTrain != null)
+                                {
+                                    <div class="float-right font-italic">@fileTrain.Name</div>
+                                }
+                                <p>Загрузите файл для обучения:</p>
+                                <InputFile OnChange="@HandleTrainFileSelection" />
+                            </div>
+                            <div class="col border py-2">
+                                @if (filePredict != null)
+                                {
+                                    <div class="float-right font-italic">@filePredict.Name</div>
+                                }
+                                <p>Загрузите файл для прогнозирования (опционально):</p>
+                                <InputFile OnChange="@HandlePredictFileSelection" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
     }
 
     @if (reply.state == WorkerState.BUSY)
@@ -36,6 +61,19 @@
 <button class="btn btn-primary" @onclick="Check">Update</button>
 
 @code {
+    private IBrowserFile fileTrain = null;
+    private IBrowserFile filePredict = null;
+
+    private void HandleTrainFileSelection(InputFileChangeEventArgs e)
+    {
+        fileTrain = e.File;
+    }
+
+    private void HandlePredictFileSelection(InputFileChangeEventArgs e)
+    {
+        filePredict = e.File;
+    }
+
     class JobStatusReply
     {
         public WorkerState? state { get; set; }
