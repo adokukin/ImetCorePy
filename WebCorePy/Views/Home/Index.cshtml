@@ -27,59 +27,8 @@
                     <pre class="text-left">@Html.Raw(ViewBag.Log)</pre>
 
                 }
-                else {
-                    <div class="container">
-                        <div class="row justify-content-start text-left">
-                            <div class="col border py-2">
-                                <div class="float-right font-italic">@HttpContextAccessor.HttpContext.Session.GetString("fileTrain")</div>
-                                <p>Загрузите файл для обучения:</p>
-                                <input type="file" name="fileTrain">
-                            </div>
-                            <div class="col border py-2">
-                                <div class="float-right font-italic">@HttpContextAccessor.HttpContext.Session.GetString("filePredict")</div>
-                                <p>Загрузите файл для прогнозирования (опционально):</p>
-                                <input type="file" name="filePredict">
-                            </div>
-                        </div>
-                    </div>
-                }
             </div>
         </div>
-
-        <div class="form-group">
-            <div class="col-md-12">
-                @if (ViewBag.ShowResults ?? false) {
-                }
-                else {
-                    <p>
-                        <a class="btn btn-primary" data-toggle="collapse" href="#collapseMethods" role="button" aria-expanded="false" aria-controls="collapseMethods">
-                            Выбранные методы <span class="badge badge-light" id="methodsSelectedCount">@Html.Raw(ViewBag.MethodsSelectedCount)</span>
-                        </a>
-                    </p>
-                    <div class="collapse" id="collapseMethods">
-                        <div class="card card-body pb-0 mb-3">
-                            @Html.Raw(ViewBag.Methods)
-                        </div>
-                    </div>
-                    <script>
-                        $(document).ready(function () {
-                            $("#collapseMethods input[type='checkbox']").click(function () {
-                                $("#methodsSelectedCount").html($("#collapseMethods input[type='checkbox']:checked").length);
-                            });
-                        });
-                    </script>
-
-                    <div class="float-left">Таймаут на метод, сек (0 - не установлено): <input type="text" value="0" size="3" name="timeout"></div>
-                    <input type="submit" value="Обработать">
-                }
-                <div class="float-right">@Html.ActionLink("Очистить сессию", "Clear", "Home", null)</div>
-            </div>
-        </div>
-
-    </form>
-
-    <form method="get" asp-controller="JobStatus" asp-action="Index">
-        <input type="submit" value="Проверить">
     </form>
 
     <component type="typeof(JobStatus)" render-mode="ServerPrerendered" />

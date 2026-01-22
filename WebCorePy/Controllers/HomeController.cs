@@ -140,11 +140,9 @@ namespace WebCorePy.Controllers
         }
 
 
-        public string[] algorithms = null;
+        public string[] algorithms = [];
         public string[] Algorithms {
             get {
-                if (algorithms == null)
-                    algorithms = System.IO.File.ReadAllText(env.WebRootPath + "\\js\\!algorithms.template.json", Encoding.GetEncoding(866)).Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
                 return algorithms;
             }
         }
