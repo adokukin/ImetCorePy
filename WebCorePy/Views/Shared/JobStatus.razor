@@ -1,4 +1,5 @@
 ﻿@using System.Net.Http.Json
+@using System.Text.Json.Nodes
 @inject HttpClient Http
 @inject NavigationManager NavigationManager
 
@@ -9,32 +10,57 @@
 
     @if ((reply.state == WorkerState.EMPTY) || (reply.state == WorkerState.READY))
     {
-        <form method="post" enctype="multipart/form-data" asp-controller="UploadFiles" asp-action="Index">
-            <div class="form-group">
-                <div class="col-md-12">
-                    <div class="container">
-                        <div class="row justify-content-start text-left">
-                            <div class="col border py-2">
-                                @if (fileTrain != null)
-                                {
-                                    <div class="float-right font-italic">@fileTrain.Name</div>
-                                }
-                                <p>Загрузите файл для обучения:</p>
-                                <InputFile OnChange="@HandleTrainFileSelection" />
-                            </div>
-                            <div class="col border py-2">
-                                @if (filePredict != null)
-                                {
-                                    <div class="float-right font-italic">@filePredict.Name</div>
-                                }
-                                <p>Загрузите файл для прогнозирования (опционально):</p>
-                                <InputFile OnChange="@HandlePredictFileSelection" />
-                            </div>
+        <div class="form-group">
+            <div class="col-md-12">
+                <div class="container">
+                    <div class="row justify-content-start text-left">
+                        <div class="col border py-2">
+                            @if (fileTrain != null)
+                            {
+                                <div class="float-right font-italic">@fileTrain.Name</div>
+                            }
+                            <p>Загрузите файл для обучения:</p>
+                            <InputFile OnChange="@HandleTrainFileSelection" />
+                        </div>
+                        <div class="col border py-2">
+                            @if (filePredict != null)
+                            {
+                                <div class="float-right font-italic">@filePredict.Name</div>
+                            }
+                            <p>Загрузите файл для прогнозирования (опционально):</p>
+                            <InputFile OnChange="@HandlePredictFileSelection" />
                         </div>
                     </div>
                 </div>
             </div>
-        </form>
+        </div>
+        <div class="form-group">
+            <div class="col-md-12">
+                <p>
+                    <button class="btn btn-primary" @onclick="@(() => collapseAlgorithmsList = !collapseAlgorithmsList)">Выбранные методы <span class="badge badge-light" >@selectedAlgorithms.Sum(x => x.Value ? 1 : 0)</span></button>
+                </p>
+                @if (!collapseAlgorithmsList)
+                {
+                    <div class="card card-body pb-0 mb-3">
+                        @foreach (var algorithm in algorithms)
+                        {
+                            var name = algorithm["name"].ToString();
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <div class="input-group-text form-control">
+                                        <InputCheckbox id="@name" @bind-Value="@selectedAlgorithms[name]" class="mr-2" />
+                                        <label for="@name">@name</label>
+                                    </div>
+                                </div>
+                                <input type="text" class="form-control" aria-label="@name" value="@algorithm.ToString()">
+                            </div>
+                            <p></p>
+                        }
+                    </div>
+                }
+                <div class="float-left">Таймаут на метод, сек (0 - не установлено): <input type="text" value="0" size="3" name="timeout"></div>
+            </div>
+        </div>
     }
 
     @if (reply.state == WorkerState.BUSY)
@@ -63,6 +89,23 @@
 @code {
     private IBrowserFile fileTrain = null;
     private IBrowserFile filePredict = null;
+    private JsonArray algorithms = new JsonArray();
+    private Dictionary<string, bool> selectedAlgorithms = new Dictionary<string, bool> ();
+    private bool collapseAlgorithmsList = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        String json = await System.IO.File.ReadAllTextAsync("configs\\algorithms.json");
+        JsonNode node = JsonNode.Parse(json);
+        if (node is JsonArray a)
+        {
+            algorithms = a;
+            foreach (var algorithm in algorithms)
+            {
+                selectedAlgorithms[algorithm["name"].ToString()] = false;
+            }
+        }
+    }
 
     private void HandleTrainFileSelection(InputFileChangeEventArgs e)
     {
