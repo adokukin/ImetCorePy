@@ -122,7 +122,7 @@
     }
 
     protected override async Task OnInitializedAsync()
-    {
+    {       
         String json = await System.IO.File.ReadAllTextAsync("configs\\algorithms.json");
         JsonNode node = JsonNode.Parse(json);
         if (node is JsonArray)
@@ -131,6 +131,41 @@
             foreach (var algorithm in algorithms)
             {
                 settings[algorithm["name"].ToString()] = new AlgorithmSettings(algorithm.ToString());
+            }
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+        {
+            return;
+        }
+
+        string cookies = await jsRuntime.InvokeAsync<string>("GetCookies");
+
+        foreach(var cookie in cookies.Split(";"))
+        {
+            var parts = cookie.Split("=");
+            string key = parts[0].Trim();
+            string value = parts[1].Trim();
+
+            switch(key)
+            {
+                case "slot":
+                    slot = int.Parse(value);
+                    break;
+                case "algorithms":
+                    foreach (var alg in value.Split(","))
+                    {
+                        if (settings.ContainsKey(alg)){
+                            settings[alg].selected = true;
+                        }
+                    }
+                    break;
+                case "timeout":
+                    timeout = int.Parse(value);
+                    break;
             }
         }
     }
@@ -161,6 +196,7 @@
     }
 
     private JobStatusReply reply = null;
+    private int? slot = null;
 
     private async Task Check()
     {
