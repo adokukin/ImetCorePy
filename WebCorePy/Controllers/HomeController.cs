@@ -32,7 +32,6 @@ namespace WebCorePy.Controllers
 
         public IActionResult Index()
         {
-            GetAlgorithmsHtml();
             return View();
         }
 
@@ -147,81 +146,6 @@ namespace WebCorePy.Controllers
             }
         }
 
-        private string GetCookieForAlgorithm(string name) => Request?.Cookies?["alg_" + name]?.ToString();
-
-
-        /// <summary>
-        /// обновление настроек алгоритмов 
-        /// </summary>
-        private void UpdateAlgorithmCookiesByRequestForm() {
-            string[] arr = Algorithms;
-            string key, name;
-            for (int i = 0; i < arr.Length; i++) {
-                name = GetAlgorithmName(arr[i]);
-                key = "alg_" + name;
-                if (string.CompareOrdinal(Request?.Form[key], "1") == 0)
-                    SetCookie(key, "1", 365);
-                else
-                    RemoveCookie(key);
-            }
-        }
-
-
-        public string GetAlgorithmsHtml() {
-            StringBuilder sb = new StringBuilder();
-            string[] arr = Algorithms;
-            string name, checkedStr;
-            int MethodsSelectedCount = 0;
-            for (int i = 0; i < arr.Length; i++) {
-                name = GetAlgorithmName(arr[i]);
-                if (string.IsNullOrEmpty(GetCookieForAlgorithm(name)))
-                    checkedStr = string.Empty;
-                else {
-                    checkedStr = " checked=\"checked\"";
-                    MethodsSelectedCount++;
-                }
-                sb.AppendLine($@"<div class=""input-group mb-3"">
-  <div class=""input-group-prepend"">
-    <div class=""input-group-text"">
-      <input type=""checkbox"" value=""1"" name=""alg_{name}"" aria-label=""{name}"" class=""mr-2"" {checkedStr}> {name}
-    </div>
-  </div>
-  <input type=""text"" class=""form-control"" aria-label=""{name}"" value='{arr[i]}'>
-</div>");
-            }
-            ViewBag.MethodsSelectedCount = MethodsSelectedCount.ToString();
-            return ViewBag.Methods = sb.ToString();
-        }
-
-        private string GetAllAlgorithmsJson() {
-            return string.Join($",{Environment.NewLine}", Algorithms);
-        }
-
-        private string GetSelectedAlgorithmsJson() {
-            List<string> list = new List<string>();
-            foreach (var item in Algorithms) {
-                string name = GetAlgorithmName(item);
-                //if (!string.IsNullOrEmpty(GetCookieForAlgorithm(name)))
-                if (string.CompareOrdinal(Request?.Form["alg_" + name], "1") == 0)
-                    list.Add(item);
-            }
-            return string.Join($",{Environment.NewLine}", list);
-        }
-
-
-        private string GetSettingsJson(int timeout4Method, string algorithmsJson=null) {
-            string jsonTemplate = System.IO.File.ReadAllText(env.WebRootPath + "\\py\\!settings.template.json", Encoding.GetEncoding(866));
-            if (algorithmsJson==null)
-                algorithmsJson = GetSelectedAlgorithmsJson();
-            return jsonTemplate
-                .Replace("#ALGORITHMS#", algorithmsJson)
-                .Replace("#ROOT#", env.WebRootPath.Replace("\\", "\\\\"))
-                .Replace("#ROOTRightSlash#", env.WebRootPath.Replace("\\", "/"))
-                .Replace("#fileTrain#", HttpContext.Session.GetString("fileTrain"))
-                .Replace("#filePredict#", HttpContext.Session.GetString("filePredict"))
-                .Replace("#TIMEOUT#", timeout4Method.ToString())
-                ;
-        }
 
         private async ValueTask<Message> RequestDispatcher(WorkerCommand command, WorkerRequest? data=null)
         {
@@ -333,7 +257,6 @@ namespace WebCorePy.Controllers
 
             HttpContext.Session.Remove("fileTrain");
             HttpContext.Session.Remove("filePredict");
-            UpdateAlgorithmCookiesByRequestForm();  // сохраняем выбор алгоритмов в куки
 
             ViewBag.ShowResults = false;
             ViewBag.ShowResultsXls = false;
@@ -489,42 +412,5 @@ namespace WebCorePy.Controllers
                 ;
             Log($"RunCmd END");
         }
-
-
-
-
-        /// <summary>
-        /// получение параметра из куков
-        /// </summary>
-        /// <param name="str">имя параметра</param>
-        /// <returns>строка (или null)</returns>
-        public string GetCookie(string key) {
-            if (HttpContext.Request.Cookies.TryGetValue(key, out string value))
-                return value;
-            return null;
-        }
-
-        /// <summary>
-        /// записываем кук 
-        /// </summary>
-        /// <param name="CookieName">имя кука</param>
-        /// <param name="CookieValue">значение кука</param>
-        /// <param name="Days">на сколько дней? (0 - сессионный кук)</param>
-        public void SetCookie(string CookieName, string CookieValue, int Days=0) {
-            if (Days > 0)
-                HttpContext.Response.Cookies.Append(CookieName, CookieValue, new CookieOptions() { Expires = DateTime.Now.AddDays(Days) });
-            else
-                HttpContext.Response.Cookies.Append(CookieName, CookieValue);
-        }
-
-
-        /// <summary>
-        /// удалить кук
-        /// </summary>
-        /// <param name="CookieName"></param>
-        public void RemoveCookie(string CookieName) {
-            HttpContext.Response.Cookies.Delete(CookieName);
-        }
-
     }
 }
