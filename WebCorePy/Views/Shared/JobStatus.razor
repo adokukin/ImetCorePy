@@ -3,6 +3,7 @@
 @using System.IO
 @inject HttpClient Http
 @inject NavigationManager NavigationManager
+@inject IJSRuntime jsRuntime
 
 @if (reply != null)
 {
@@ -39,7 +40,8 @@
             <div class="col-md-12">
                 <div class="row">
                     <button class="btn btn-primary" @onclick="@(() => collapseAlgorithmsList = !collapseAlgorithmsList)">Выбранные методы <span class="badge badge-light" >@settings.Sum(x => x.Value.selected ? 1 : 0)</span></button>
-                    <div class="float-right">Таймаут на метод, сек (0 - не установлено): <InputNumber @bind-Value="@timeout" size="3" /></div>
+                    <span>&nbsp;</span>
+                    <div>Таймаут на метод, сек (0 - не установлено): <InputNumber @bind-Value="@timeout" @bind-Value:after="timeoutChanged" size="3" /></div>
                 </div>
 
                 @if (!collapseAlgorithmsList)
@@ -51,13 +53,12 @@
                             <div class="input-group mb-3">
                                 <div class="input-group-prepend">
                                     <div class="input-group-text form-control">
-                                        <InputCheckbox id="@name" @bind-Value="@settings[name].selected" class="mr-2" />
+                                        <InputCheckbox id="@name" @bind-Value="@settings[name].selected" class="mr-2" @bind-Value:after="algorithmToggled" />
                                         <label for="@name">@name</label>
                                     </div>
                                 </div>
                                 <InputText type="text" class="form-control" aria-label="@name" @bind-Value="@settings[name].settings" />
                             </div>
-                            <p></p>
                         }
                     </div>
                 }
@@ -109,6 +110,17 @@
     private bool collapseAlgorithmsList = true;
     private int timeout;
 
+    private async Task algorithmToggled()
+    {
+        string selected = String.Join(",", settings.Where(kvp => kvp.Value.selected).Select(kvp => kvp.Key).ToList());
+        await jsRuntime.InvokeVoidAsync("SetCookie", "algorithms", selected);
+    }
+
+    private async Task timeoutChanged()
+    {
+        await jsRuntime.InvokeVoidAsync("SetCookie", "timeout", timeout.ToString());
+    }
+
     protected override async Task OnInitializedAsync()
     {
         String json = await System.IO.File.ReadAllTextAsync("configs\\algorithms.json");
@@ -154,6 +166,7 @@
     {
         reply = await Http.GetFromJsonAsync<JobStatusReply>(NavigationManager.ToAbsoluteUri("JobStatus"));
         // TODO: deal with HTTP errors
+        await jsRuntime.InvokeVoidAsync("SetCookie", "slot", reply.slot.ToString());
     }
 
     class FileUploadModel
