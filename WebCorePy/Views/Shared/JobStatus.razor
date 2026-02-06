@@ -205,20 +205,6 @@
         await jsRuntime.InvokeVoidAsync("SetCookie", "slot", reply.slot.ToString());
     }
 
-    class FileUploadModel
-    {
-        public string filename { get; set; }
-        public byte[] bytes { get; set; }
-    }
-
-    class JobRequest
-    {
-        public List<string> algorithms;
-        public int timeout;
-        public FileUploadModel fileTrain;
-        public FileUploadModel filePredict;
-    }
-
     private async Task<FileUploadModel> UploadFile(IBrowserFile file)
     {
         FileUploadModel ret;

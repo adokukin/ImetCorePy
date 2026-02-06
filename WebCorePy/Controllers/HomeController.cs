@@ -230,7 +230,14 @@ namespace WebCorePy.Controllers
 
             return Json(new { result = result, state = state, message = msg, progress = progress, output = output, slot = slot});
         }
-        
+
+        [HttpPost("JobStart")]
+        public async Task<IActionResult> Post([FromBody] JobRequest request)
+        {
+            await Task.CompletedTask;
+            return null;
+        }
+
         /// <summary>
         /// Основные вычисления
         /// </summary>

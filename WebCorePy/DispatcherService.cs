@@ -1,12 +1,27 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 
 namespace WebCorePy
 {
+    public class FileUploadModel
+    {
+        public string filename { get; set; }
+        public byte[] bytes { get; set; }
+    }
+
+    public class JobRequest
+    {
+        public List<string> algorithms { get; set; }
+        public int timeout { get; set; }
+        public FileUploadModel fileTrain { get; set; }
+        public FileUploadModel filePredict { get; set; }
+    }
+
     public class DispatcherService : BackgroundService
     {
         public const int NumProcessors = 5;
