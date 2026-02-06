@@ -146,8 +146,7 @@ namespace WebCorePy.Controllers
             }
         }
 
-
-        private async ValueTask<Message> RequestDispatcher(WorkerCommand command, WorkerRequest? data=null)
+        private async ValueTask<Message> RequestDispatcher(int? slot, WorkerCommand command, WorkerRequest? data=null)
         {
             Message candidate;
             Message response = new Message();
@@ -158,7 +157,6 @@ namespace WebCorePy.Controllers
             request.id = id == null ? 1 : (int)id + 1;
             HttpContext.Session.SetInt32("id", request.id);
 
-            int? slot = HttpContext.Session.GetInt32("slot");
             request.source = slot;
 
             request.session = HttpContext.Session.Id;
@@ -184,11 +182,7 @@ namespace WebCorePy.Controllers
 
                             if (response.id == request.id)
                             {
-                                if (slot == null)
-                                {
-                                    HttpContext.Session.SetInt32("slot", (int)response.target);
-                                }
-                                else if ((int)slot != response.target)
+                                if ((slot != null) && ((int)slot != response.target))
                                 {
                                     // TODO: deal with error
                                     Console.WriteLine(@"Error: wrong response target {response.target} instead of {slot}");
@@ -208,16 +202,16 @@ namespace WebCorePy.Controllers
         }
 
         [HttpGet("JobStatus")]
-        public async Task<IActionResult> Get()
+        public async Task<IActionResult> Get(int? slot)
         {
-            Message response = await RequestDispatcher(WorkerCommand.CHECK);
+            Message response = await RequestDispatcher(slot, WorkerCommand.CHECK);
             WorkerResponse workerResponse = (WorkerResponse)response.response;
             String msg = $"<div class=\"alert alert-success\" role=\"alert\">Проверка обработчика {response.target} для {HttpContext.Session.Id}, id {response.id}, state {workerResponse.state}</div>";
             WorkerResult? result = null;
             WorkerState? state = null;
             Decimal progress = 0;
             string[] output = [];
-            int? slot = response.target;
+            slot = response.target;
 
             if (response.response != null) 
             {
@@ -247,6 +241,8 @@ namespace WebCorePy.Controllers
         [HttpPost("UploadFiles")]
         public async Task<IActionResult> Post(List<IFormFile> fileTrain, List<IFormFile> filePredict, string timeout)
         {
+            return View("Index");
+            /*
             Message response = await RequestDispatcher(WorkerCommand.CHECK);
             WorkerResponse workerResponse = (WorkerResponse)response.response;
             ViewBag.Msg = $"<div class=\"alert alert-success\" role=\"alert\">Проверка обработчика {response.target} для {HttpContext.Session.Id}, id {response.id}, state {workerResponse.state}</div>";
@@ -254,7 +250,7 @@ namespace WebCorePy.Controllers
             return View("Index");
 
 
-            /*
+            
             if (process != null)
             {
                 ViewBag.Msg = $"<div class=\"alert alert-danger\" role=\"alert\">Идет обработка... Для ее принудительного завершения перейдите по ссылке \"Очистить сессию\"</div>";

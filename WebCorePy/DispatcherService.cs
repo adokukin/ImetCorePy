@@ -16,6 +16,7 @@ namespace WebCorePy
 
     public class JobRequest
     {
+        public int? slot { get; set; }
         public List<string> algorithms { get; set; }
         public int timeout { get; set; }
         public FileUploadModel fileTrain { get; set; }

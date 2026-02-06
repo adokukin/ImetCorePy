@@ -142,6 +142,7 @@
             return;
         }
 
+        // TODO: replace invoking jsRuntime with ProtectedLocalStorage
         string cookies = await jsRuntime.InvokeAsync<string>("GetCookies");
 
         foreach(var cookie in cookies.Split(";"))
@@ -200,9 +201,10 @@
 
     private async Task Check()
     {
-        reply = await Http.GetFromJsonAsync<JobStatusReply>(NavigationManager.ToAbsoluteUri("JobStatus"));
+        reply = await Http.GetFromJsonAsync<JobStatusReply>(NavigationManager.ToAbsoluteUri("JobStatus") + "?slot=" + (slot != null ? slot.ToString() : ""));
         // TODO: deal with HTTP errors
-        await jsRuntime.InvokeVoidAsync("SetCookie", "slot", reply.slot.ToString());
+        slot = reply.slot;
+        await jsRuntime.InvokeVoidAsync("SetCookie", "slot", slot.ToString());
     }
 
     private async Task<FileUploadModel> UploadFile(IBrowserFile file)
@@ -225,6 +227,7 @@
     private async Task Start()
     {
         JobRequest request = new JobRequest();
+        request.slot = slot;
         request.algorithms = settings.Where(kvp => kvp.Value.selected).Select(kvp => kvp.Value.settings).ToList();
         request.timeout = timeout;
         request.fileTrain = await UploadFile(fileTrain);
