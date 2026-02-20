@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
@@ -30,17 +31,28 @@ namespace WebCorePy
 
     public struct WorkerRequest
     {
-        public int id;
-        public WorkerCommand command;
-
-        // TODO: tables
-        // TODO: methods
-        // TODO: cross-validation setup
+        public WorkerCommand command {  get; set; }
+        public bool train {  get; set; }
+        public bool test { get; set; }
+        public List<string> algorithms { get; set; }
+        public int timeout { get; set; }
 
         public WorkerRequest(WorkerCommand command)
         {
-            this.id = 0;
             this.command = command;
+            this.train = false;
+            this.test = false ;
+            this.algorithms = null;
+            this.timeout = 0;
+        }
+
+        public WorkerRequest(WorkerCommand command, bool train, bool test, List<string> algorithms, int timeout)
+        {
+            this.command = command;
+            this.train = train;
+            this.test = test;
+            this.algorithms = algorithms;
+            this.timeout = timeout;
         }
     }
 
@@ -53,9 +65,8 @@ namespace WebCorePy
         public decimal progress;
         public string[] output;
 
-        public WorkerResponse(int id, WorkerResult result, WorkerState state, decimal progress, string[] output)
+        public WorkerResponse(WorkerResult result, WorkerState state, decimal progress, string[] output)
         {
-            this.id = id;
             this.result = result;
             this.state = state;
 
@@ -195,7 +206,7 @@ namespace WebCorePy
                 if (_request_buffer.TryReceive<WorkerRequest>(out request))
                 {
                     // TODO: check command and call a method accordingly
-                    WorkerResponse response = new WorkerResponse(request.id, WorkerResult.SUCCESS, State, progress, messages.ToArray());
+                    WorkerResponse response = new WorkerResponse(WorkerResult.SUCCESS, State, progress, messages.ToArray());
                     _response_buffer.Post<WorkerResponse>(response);
                     messages.Clear();
                 }

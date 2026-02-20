@@ -101,7 +101,6 @@ namespace WebCorePy
                             throw new InvalidOperationException();
                         }
                         WorkerRequest workerRequest = (WorkerRequest)(request.request);
-                        workerRequest.id = request.id;
                         response.response = await pool[slot - 1].Command(workerRequest);
 
                         WorkerResponse workerResponse = (WorkerResponse)(response.response);

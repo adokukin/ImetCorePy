@@ -146,7 +146,7 @@ namespace WebCorePy.Controllers
             }
         }
 
-        private async ValueTask<Message> RequestDispatcher(int? slot, WorkerCommand command, WorkerRequest? data=null)
+        private async ValueTask<Message> RequestDispatcher(int? slot, WorkerRequest data)
         {
             Message candidate;
             Message response = new Message();
@@ -161,7 +161,7 @@ namespace WebCorePy.Controllers
 
             request.session = HttpContext.Session.Id;
             request.target = 0;
-            request.request = new WorkerRequest(command);
+            request.request = data;
 
             channel.Writer.TryWrite(request);
 
@@ -204,9 +204,8 @@ namespace WebCorePy.Controllers
         [HttpGet("JobStatus")]
         public async Task<IActionResult> Get(int? slot)
         {
-            Message response = await RequestDispatcher(slot, WorkerCommand.CHECK);
-            WorkerResponse workerResponse = (WorkerResponse)response.response;
-            String msg = $"<div class=\"alert alert-success\" role=\"alert\">Проверка обработчика {response.target} для {HttpContext.Session.Id}, id {response.id}, state {workerResponse.state}</div>";
+            Message response = await RequestDispatcher(slot, new WorkerRequest(WorkerCommand.CHECK));
+            String msg = $"<div class=\"alert alert-success\" role=\"alert\">Проверка обработчика {response.target} для {HttpContext.Session.Id}, id {response.id}, ---</div>";
             WorkerResult? result = null;
             WorkerState? state = null;
             Decimal progress = 0;
@@ -215,21 +214,72 @@ namespace WebCorePy.Controllers
 
             if (response.response != null) 
             {
-                WorkerResponse value = (WorkerResponse)(response.response);
-                result = value.result;
-                state = value.state;
-                progress = value.progress;
-                output = value.output;
+                WorkerResponse workerResponse = (WorkerResponse)(response.response);
+                msg = $"<div class=\"alert alert-success\" role=\"alert\">Проверка обработчика {response.target} для {HttpContext.Session.Id}, id {response.id}, state {workerResponse.state}</div>";
+                result = workerResponse.result;
+                state = workerResponse.state;
+                progress = workerResponse.progress;
+                output = workerResponse.output;
             }
 
             return Json(new { result = result, state = state, message = msg, progress = progress, output = output, slot = slot});
         }
 
+        private void SaveUploadedFile(int slot, string stage, FileUploadModel uploaded)
+        {
+            var uploadDirectory = Path.Combine(Directory.GetCurrentDirectory(), "Data" + slot.ToString());
+            if (!Directory.Exists(uploadDirectory)) Directory.CreateDirectory(uploadDirectory);
+
+            if (uploaded.filename != null)
+            {
+                var safeFileName = stage + Path.GetExtension(uploaded.filename);
+                var filePath = Path.Combine(uploadDirectory, safeFileName);
+                System.IO.File.WriteAllBytes(filePath, uploaded.bytes);
+            }
+
+        }
+
         [HttpPost("JobStart")]
         public async Task<IActionResult> Post([FromBody] JobRequest request)
         {
-            await Task.CompletedTask;
-            return null;
+            if (request.slot != null)
+            {
+                var slot = (int)request.slot;
+                SaveUploadedFile(slot, "training", request.fileTrain);
+                SaveUploadedFile(slot, "predicting", request.filePredict);
+
+                // TODO: save metadata (table names)
+
+                WorkerRequest workerRequest = new WorkerRequest(
+                    WorkerCommand.START,
+                    request.fileTrain.filename != null,
+                    request.filePredict.filename != null,
+                    request.algorithms,
+                    request.timeout
+                    );
+                Message response = await RequestDispatcher(slot, workerRequest);
+                String msg = $"<div class=\"alert alert-success\" role=\"alert\">Запуск обработчика {response.target} для {HttpContext.Session.Id}, id {response.id}, ---</div>";
+                WorkerResult? result = null;
+                WorkerState? state = null;
+                Decimal progress = 0;
+                string[] output = [];
+
+                if (response.response != null)
+                {
+                    WorkerResponse workerResponse = (WorkerResponse)(response.response);
+                    msg = $"<div class=\"alert alert-success\" role=\"alert\">Запуск обработчика {response.target} для {HttpContext.Session.Id}, id {response.id}, state {workerResponse.state}</div>";
+                    result = workerResponse.result;
+                    state = workerResponse.state;
+                    progress = workerResponse.progress;
+                    output = workerResponse.output;
+                }
+
+                return Json(new { result = result, state = state, message = msg, progress = progress, output = output, slot = slot });
+            }
+            else
+            {
+                return null;
+            }
         }
 
         /// <summary>
