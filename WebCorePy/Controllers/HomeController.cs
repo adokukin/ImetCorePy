@@ -1,12 +1,12 @@
 ﻿using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Security.Cryptography.Xml;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
@@ -148,6 +148,28 @@ namespace WebCorePy.Controllers
             }
         }
 
+        private JsonResult DispatcherResponceToJson(Message response)
+        {
+            String msg = $"<div class=\"alert alert-success\" role=\"alert\">Проверка обработчика {response.target} для {HttpContext.Session.Id}, id {response.id}, ---</div>";
+            WorkerResult? result = null;
+            WorkerState? state = null;
+            Decimal progress = 0;
+            string[] output = [];
+            int? slot = response.target;
+
+            if (response.response != null)
+            {
+                WorkerResponse workerResponse = (WorkerResponse)(response.response);
+                msg = $"<div class=\"alert alert-success\" role=\"alert\">Проверка обработчика {response.target} для {HttpContext.Session.Id}, id {response.id}, state {workerResponse.state}</div>";
+                result = workerResponse.result;
+                state = workerResponse.state;
+                progress = workerResponse.progress;
+                output = workerResponse.output;
+            }
+
+            return Json(new { result = result, state = state, message = msg, progress = progress, output = output, slot = slot });
+        }
+
         private async ValueTask<Message> RequestDispatcher(int? slot, WorkerRequest data)
         {
             Message candidate;
@@ -207,24 +229,7 @@ namespace WebCorePy.Controllers
         public async Task<IActionResult> Get(int? slot)
         {
             Message response = await RequestDispatcher(slot, new WorkerRequest(WorkerCommand.CHECK));
-            String msg = $"<div class=\"alert alert-success\" role=\"alert\">Проверка обработчика {response.target} для {HttpContext.Session.Id}, id {response.id}, ---</div>";
-            WorkerResult? result = null;
-            WorkerState? state = null;
-            Decimal progress = 0;
-            string[] output = [];
-            slot = response.target;
-
-            if (response.response != null) 
-            {
-                WorkerResponse workerResponse = (WorkerResponse)(response.response);
-                msg = $"<div class=\"alert alert-success\" role=\"alert\">Проверка обработчика {response.target} для {HttpContext.Session.Id}, id {response.id}, state {workerResponse.state}</div>";
-                result = workerResponse.result;
-                state = workerResponse.state;
-                progress = workerResponse.progress;
-                output = workerResponse.output;
-            }
-
-            return Json(new { result = result, state = state, message = msg, progress = progress, output = output, slot = slot});
+            return DispatcherResponceToJson(response);
         }
 
         private void SaveUploadedFile(string uploadDirectory, string stage, FileUploadModel uploaded)
@@ -260,8 +265,6 @@ namespace WebCorePy.Controllers
                 var slot = (int)request.slot;
                 SaveJobData(slot, request);
 
-                // TODO: save metadata (table names)
-
                 WorkerRequest workerRequest = new WorkerRequest(
                     WorkerCommand.START,
                     request.fileTrain.filename != null,
@@ -270,23 +273,7 @@ namespace WebCorePy.Controllers
                     request.timeout
                     );
                 Message response = await RequestDispatcher(slot, workerRequest);
-                String msg = $"<div class=\"alert alert-success\" role=\"alert\">Запуск обработчика {response.target} для {HttpContext.Session.Id}, id {response.id}, ---</div>";
-                WorkerResult? result = null;
-                WorkerState? state = null;
-                Decimal progress = 0;
-                string[] output = [];
-
-                if (response.response != null)
-                {
-                    WorkerResponse workerResponse = (WorkerResponse)(response.response);
-                    msg = $"<div class=\"alert alert-success\" role=\"alert\">Запуск обработчика {response.target} для {HttpContext.Session.Id}, id {response.id}, state {workerResponse.state}</div>";
-                    result = workerResponse.result;
-                    state = workerResponse.state;
-                    progress = workerResponse.progress;
-                    output = workerResponse.output;
-                }
-
-                return Json(new { result = result, state = state, message = msg, progress = progress, output = output, slot = slot });
+                return DispatcherResponceToJson(response);
             }
             else
             {
