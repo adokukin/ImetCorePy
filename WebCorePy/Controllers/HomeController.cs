@@ -6,7 +6,9 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Security.Cryptography.Xml;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
@@ -225,11 +227,8 @@ namespace WebCorePy.Controllers
             return Json(new { result = result, state = state, message = msg, progress = progress, output = output, slot = slot});
         }
 
-        private void SaveUploadedFile(int slot, string stage, FileUploadModel uploaded)
+        private void SaveUploadedFile(string uploadDirectory, string stage, FileUploadModel uploaded)
         {
-            var uploadDirectory = Path.Combine(Directory.GetCurrentDirectory(), "Data" + slot.ToString());
-            if (!Directory.Exists(uploadDirectory)) Directory.CreateDirectory(uploadDirectory);
-
             if (uploaded.filename != null)
             {
                 var safeFileName = stage + Path.GetExtension(uploaded.filename);
@@ -239,14 +238,27 @@ namespace WebCorePy.Controllers
 
         }
 
+        private void SaveJobData(int slot, JobRequest request)
+        {
+            string uploadDirectory = Path.Combine(Directory.GetCurrentDirectory(), "Data" + slot.ToString());
+            if (!Directory.Exists(uploadDirectory)) Directory.CreateDirectory(uploadDirectory);
+
+            SaveUploadedFile(uploadDirectory, "training", request.fileTrain);
+            SaveUploadedFile(uploadDirectory, "predicting", request.filePredict);
+
+            var filePath = Path.Combine(uploadDirectory, "metadata.json");
+            var options = new JsonSerializerOptions { WriteIndented = true };
+            // TODO: filter relevant fields
+            System.IO.File.WriteAllText(filePath, JsonSerializer.Serialize(request, options));
+        }
+
         [HttpPost("JobStart")]
         public async Task<IActionResult> Post([FromBody] JobRequest request)
         {
             if (request.slot != null)
             {
                 var slot = (int)request.slot;
-                SaveUploadedFile(slot, "training", request.fileTrain);
-                SaveUploadedFile(slot, "predicting", request.filePredict);
+                SaveJobData(slot, request);
 
                 // TODO: save metadata (table names)
 
