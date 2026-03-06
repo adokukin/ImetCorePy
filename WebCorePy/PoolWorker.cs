@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
+using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
@@ -160,8 +160,8 @@ namespace WebCorePy
             // outside processor should deal with data integrity
             process = new Process();
             process.StartInfo = info;
-            process.OutputDataReceived += (sender, line) => messages.Add(line.Data);
-            process.ErrorDataReceived += (sender, line) => Decimal.TryParse(line.Data, out progress);
+            process.OutputDataReceived += OutputDataReceived;
+            process.ErrorDataReceived += ErrorDataReceived;
             process.EnableRaisingEvents = true;
             process.Exited += ProcessExited;
 
@@ -169,8 +169,23 @@ namespace WebCorePy
             process.BeginOutputReadLine();
             process.BeginErrorReadLine();
 
-
             return res ? WorkerResult.SUCCESS : WorkerResult.ERROR;
+        }
+
+        private void OutputDataReceived(object sender, DataReceivedEventArgs line)
+        {
+            lock (messages)
+            {
+                messages.Add(line.Data);
+            }
+        }
+
+        private void ErrorDataReceived(object sender, DataReceivedEventArgs line)
+        {
+            lock (messages)
+            {
+                var test = Decimal.TryParse(line.Data, CultureInfo.InvariantCulture, out progress);
+            }
         }
 
         private void ProcessExited(object sender, EventArgs e)
@@ -241,9 +256,14 @@ namespace WebCorePy
                                 break;
                             }
                     }
-                    WorkerResponse response = new WorkerResponse(result, State, progress, messages.ToArray());
-                    _response_buffer.Post<WorkerResponse>(response);
-                    messages.Clear();
+                    lock (messages)
+                    {
+                        WorkerResponse response = new WorkerResponse(result, State, progress, messages.ToArray());
+                        Console.WriteLine(messages.ToString());
+
+                        _response_buffer.Post<WorkerResponse>(response);
+                        //messages.Clear();
+                    }
                 }
             }
         }
