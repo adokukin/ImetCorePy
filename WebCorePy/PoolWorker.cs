@@ -139,7 +139,7 @@ namespace WebCorePy
             return response;
         }
 
-        public void Start()
+        public WorkerResult Start()
         {
             messages = new List<string>();
             progress = 0;
@@ -162,14 +162,23 @@ namespace WebCorePy
             process.StartInfo = info;
             process.OutputDataReceived += (sender, line) => messages.Add(line.Data);
             process.ErrorDataReceived += (sender, line) => Decimal.TryParse(line.Data, out progress);
+            process.EnableRaisingEvents = true;
+            process.Exited += ProcessExited;
+
             var res = process.Start();
             process.BeginOutputReadLine();
             process.BeginErrorReadLine();
 
-            process.WaitForExit();
 
+            return res ? WorkerResult.SUCCESS : WorkerResult.ERROR;
+        }
+
+        private void ProcessExited(object sender, EventArgs e)
+        {
             process.CancelOutputRead();
             process.CancelErrorRead();
+            process.Dispose();
+            process = null;
 
             start = null;
             end = DateTime.Now;
@@ -177,16 +186,19 @@ namespace WebCorePy
 
         public void Stop()
         {
-            process.Kill();
+            if (process != null)
+            {
+                process.Kill();
+            }
 
             start = null;
             end = null;
         }
 
-        public void Restart()
+        public WorkerResult Restart()
         {
             Stop();
-            Start();
+            return Start();
         }
 
         public void Cancel()
@@ -205,8 +217,31 @@ namespace WebCorePy
             {
                 if (_request_buffer.TryReceive<WorkerRequest>(out request))
                 {
-                    // TODO: check command and call a method accordingly
-                    WorkerResponse response = new WorkerResponse(WorkerResult.SUCCESS, State, progress, messages.ToArray());
+                    WorkerResult result = WorkerResult.SUCCESS;
+                    switch (request.command)
+                    {
+                        case WorkerCommand.CHECK:
+                            {
+                                // do nothing
+                                break;
+                            }
+                        case WorkerCommand.START:
+                            {
+                                result = Restart();
+                                break;
+                            }
+                        case WorkerCommand.STOP:
+                            {
+                                Stop();
+                                break;
+                            }
+                        case WorkerCommand.CLEAR:
+                            {
+                                // TODO: is it needed here?
+                                break;
+                            }
+                    }
+                    WorkerResponse response = new WorkerResponse(result, State, progress, messages.ToArray());
                     _response_buffer.Post<WorkerResponse>(response);
                     messages.Clear();
                 }
