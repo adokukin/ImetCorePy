@@ -150,12 +150,7 @@
 
     private void OnCheckTimerElapsed(object? sender, ElapsedEventArgs e)
     {
-        // Update UI thread-safely
-        InvokeAsync(async () =>
-        {
-            await Check();
-            StateHasChanged();
-        });
+        Check();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -224,19 +219,20 @@
     private JobStatusReply reply = null;
     private int? slot = null;
 
-    private void HandleResponse()
+    private async Task HandleResponse()
     {
         if (reply.state == WorkerState.BUSY)
         {
             checkTimer.Start();
         }
-        StateHasChanged();
+        // Update UI thread-safely
+        await InvokeAsync(StateHasChanged);
     }
 
     private async Task Check()
     {
         reply = await Http.GetFromJsonAsync<JobStatusReply>(NavigationManager.ToAbsoluteUri("JobStatus") + "?slot=" + (slot != null ? slot.ToString() : ""));
-        HandleResponse();
+        await HandleResponse();
 
         // TODO: deal with HTTP errors
         slot = reply.slot;
@@ -271,7 +267,7 @@
 
         HttpResponseMessage response = await Http.PostAsJsonAsync<JobRequest>(NavigationManager.ToAbsoluteUri("JobStart"), request);
         reply = await response.Content.ReadFromJsonAsync<JobStatusReply>();
-        HandleResponse();
+        await HandleResponse();
     }
 
     private async Task Stop()
