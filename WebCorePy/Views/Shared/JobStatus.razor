@@ -1,6 +1,7 @@
 ﻿@using System.Net.Http.Json
 @using System.Text.Json.Nodes
 @using System.IO
+@using System.Timers
 @inject HttpClient Http
 @inject NavigationManager NavigationManager
 @inject IJSRuntime jsRuntime
@@ -89,8 +90,6 @@
     }
 }
 
-<button class="btn btn-primary" @onclick="Check">Проверить<!--TODO: убрать после замены автопроверкой--></button>
-
 @code {
     class AlgorithmSettings
     {
@@ -110,6 +109,16 @@
     private bool collapseAlgorithmsList = true;
     private int timeout;
 
+    private Timer checkTimer = null;
+
+    public void Dispose()
+    {
+        if (checkTimer != null)
+        {
+            checkTimer.Dispose();
+        }
+    }
+
     private async Task algorithmToggled()
     {
         string selected = String.Join(",", settings.Where(kvp => kvp.Value.selected).Select(kvp => kvp.Key).ToList());
@@ -122,7 +131,7 @@
     }
 
     protected override async Task OnInitializedAsync()
-    {       
+    {
         String json = await System.IO.File.ReadAllTextAsync("configs\\algorithms.json");
         JsonNode node = JsonNode.Parse(json);
         if (node is JsonArray)
@@ -133,6 +142,20 @@
                 settings[algorithm["name"].ToString()] = new AlgorithmSettings(algorithm.ToString());
             }
         }
+
+        checkTimer = new Timer(5000);
+        checkTimer.Elapsed += OnCheckTimerElapsed;
+        checkTimer.AutoReset = false;
+    }
+
+    private void OnCheckTimerElapsed(object? sender, ElapsedEventArgs e)
+    {
+        // Update UI thread-safely
+        InvokeAsync(async () =>
+        {
+            await Check();
+            StateHasChanged();
+        });
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -169,6 +192,8 @@
                     break;
             }
         }
+
+        await Check();
     }
 
     private void HandleTrainFileSelection(InputFileChangeEventArgs e)
@@ -199,9 +224,20 @@
     private JobStatusReply reply = null;
     private int? slot = null;
 
+    private void HandleResponse()
+    {
+        if (reply.state == WorkerState.BUSY)
+        {
+            checkTimer.Start();
+        }
+        StateHasChanged();
+    }
+
     private async Task Check()
     {
         reply = await Http.GetFromJsonAsync<JobStatusReply>(NavigationManager.ToAbsoluteUri("JobStatus") + "?slot=" + (slot != null ? slot.ToString() : ""));
+        HandleResponse();
+
         // TODO: deal with HTTP errors
         slot = reply.slot;
         await jsRuntime.InvokeVoidAsync("SetCookie", "slot", slot.ToString());
@@ -235,6 +271,7 @@
 
         HttpResponseMessage response = await Http.PostAsJsonAsync<JobRequest>(NavigationManager.ToAbsoluteUri("JobStart"), request);
         reply = await response.Content.ReadFromJsonAsync<JobStatusReply>();
+        HandleResponse();
     }
 
     private async Task Stop()
