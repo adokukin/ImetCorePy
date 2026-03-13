@@ -77,6 +77,8 @@
                     @((reply.progress * 100).ToString("0.0"))%
                 </div>
             </div>
+            <label for="workerOutput" class="form-label">Вывод процесса</label>
+            <textarea @bind="reply.combined" class="form-control" id="workerOutput" rows="10" readonly></textarea>
         </div>
         <button class="btn btn-primary" @onclick="Stop">Остановить</button>
     }
