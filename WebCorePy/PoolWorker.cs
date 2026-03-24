@@ -78,7 +78,7 @@ namespace WebCorePy
     public class PoolWorker
     {
         private Task _task;
-        private CancellationTokenSource _cts;
+        private CancellationToken ct;
         private BufferBlock<WorkerRequest> _request_buffer;
         private BufferBlock<WorkerResponse> _response_buffer;
 
@@ -94,13 +94,13 @@ namespace WebCorePy
         List<string> messages = new List<string>();
         decimal progress;
 
-        public PoolWorker()
+        public PoolWorker(CancellationToken ct)
         {
-            _cts = new CancellationTokenSource();
-
+            this.ct = ct;
+            
             _request_buffer = new BufferBlock<WorkerRequest>();
             _response_buffer = new BufferBlock<WorkerResponse>();
-            _task = Task.Run(() => Process(), _cts.Token);
+            _task = Task.Run(() => Process(ct), ct);
             _request_id = 0; // TODO: do we need independent message count in workers? Remove if not.
 
             process = null;
@@ -216,18 +216,11 @@ namespace WebCorePy
             return Start(request);
         }
 
-        public void Cancel()
-        {
-            // stop this thread
-            Stop();
-            _cts.Cancel();
-        }
-
-        private async void Process() 
+        private async void Process(CancellationToken ct) 
         {
             WorkerRequest request;
 
-            while (!_cts.IsCancellationRequested)
+            while (!ct.IsCancellationRequested)
             {
                 try
                 {
@@ -270,10 +263,6 @@ namespace WebCorePy
                 catch (OperationCanceledException ex)
                 { 
                     break;
-                }
-                else
-                {
-                    await Task.Delay(10);
                 }
             }
         }

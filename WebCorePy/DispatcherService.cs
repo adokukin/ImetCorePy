@@ -37,10 +37,6 @@ namespace WebCorePy
             this.logger = logger;
 
             pool = new PoolWorker[NumProcessors];
-            for (int i = 0; i < pool.Length; i++)
-            {
-                pool[i] = new PoolWorker();
-            }
         }
 
         protected int GetFreeSlot()
@@ -69,6 +65,11 @@ namespace WebCorePy
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
+            for (int i = 0; i < pool.Length; i++)
+            {
+                pool[i] = new PoolWorker(stoppingToken);
+            }
+
             Message candidate;
             while (!stoppingToken.IsCancellationRequested)
             {
@@ -108,11 +109,6 @@ namespace WebCorePy
                         channel.Writer.TryWrite(response);
                     }
                 }
-            }
-
-            for (int i = 0; i < pool.Length; i++)
-            {
-                pool[i].Cancel();
             }
         }
     }
