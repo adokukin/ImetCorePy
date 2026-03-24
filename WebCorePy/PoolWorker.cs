@@ -139,7 +139,7 @@ namespace WebCorePy
             return response;
         }
 
-        public WorkerResult Start(WorkerRequest request)
+        public async Task<WorkerResult> Start(WorkerRequest request)
         {
             messages = new List<string>();
             progress = 0;
@@ -165,9 +165,25 @@ namespace WebCorePy
             process.EnableRaisingEvents = true;
             process.Exited += ProcessExited;
 
+            CancellationTokenSource ltc = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            ltc.CancelAfter(8000);
+
             var res = process.Start();
             process.BeginOutputReadLine();
             process.BeginErrorReadLine();
+
+            try
+            {
+                await process.WaitForExitAsync(ltc.Token);
+            }
+            catch(OperationCanceledException ex)
+            {
+                process.Kill();
+                if (ct.IsCancellationRequested)
+                {
+                    // TODO: respond differently to external cancellation
+                }
+            }
 
             return res ? WorkerResult.SUCCESS : WorkerResult.ERROR;
         }
@@ -210,10 +226,10 @@ namespace WebCorePy
             end = null;
         }
 
-        public WorkerResult Restart(WorkerRequest request)
+        public async Task<WorkerResult> Restart(WorkerRequest request)
         {
             Stop();
-            return Start(request);
+            return await Start(request);
         }
 
         private async void Process(CancellationToken ct) 
@@ -238,7 +254,7 @@ namespace WebCorePy
                                     }
                                 case WorkerCommand.START:
                                     {
-                                        result = Restart(request);
+                                        result = await Restart(request);
                                         break;
                                     }
                                 case WorkerCommand.STOP:
@@ -252,11 +268,16 @@ namespace WebCorePy
                                         break;
                                     }
                             }
+
+                            WorkerResponse response;
                             lock (messages)
                             {
-                                result = Restart(request);
-                                break;
+                                response = new WorkerResponse(result, State, progress, messages.ToArray());
+                                // TODO: clear message and deal with partial transfer on front-end
+                                //messages.Clear();
                             }
+                            _response_buffer.Post<WorkerResponse>(response);
+
                         }
                     }
                 } 
