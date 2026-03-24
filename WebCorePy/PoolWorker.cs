@@ -139,7 +139,7 @@ namespace WebCorePy
             return response;
         }
 
-        public async Task<WorkerResult> Start(WorkerRequest request)
+        public WorkerResult Start(WorkerRequest request)
         {
             messages = new List<string>();
             progress = 0;
@@ -165,25 +165,9 @@ namespace WebCorePy
             process.EnableRaisingEvents = true;
             process.Exited += ProcessExited;
 
-            CancellationTokenSource ltc = CancellationTokenSource.CreateLinkedTokenSource(ct);
-            ltc.CancelAfter(8000);
-
             var res = process.Start();
             process.BeginOutputReadLine();
             process.BeginErrorReadLine();
-
-            try
-            {
-                await process.WaitForExitAsync(ltc.Token);
-            }
-            catch(OperationCanceledException ex)
-            {
-                process.Kill();
-                if (ct.IsCancellationRequested)
-                {
-                    // TODO: respond differently to external cancellation
-                }
-            }
 
             return res ? WorkerResult.SUCCESS : WorkerResult.ERROR;
         }
@@ -226,10 +210,10 @@ namespace WebCorePy
             end = null;
         }
 
-        public async Task<WorkerResult> Restart(WorkerRequest request)
+        public WorkerResult Restart(WorkerRequest request)
         {
             Stop();
-            return await Start(request);
+            return Start(request);
         }
 
         private async void Process(CancellationToken ct) 
@@ -238,53 +222,66 @@ namespace WebCorePy
 
             while (!ct.IsCancellationRequested)
             {
-                try
+                if (_request_buffer.TryReceive<WorkerRequest>(out request))
                 {
-                    while(await _request_buffer.OutputAvailableAsync())
+                    WorkerResult result = WorkerResult.SUCCESS;
+                    switch (request.command)
                     {
-                        if (_request_buffer.TryReceive<WorkerRequest>(out request))
+                        case WorkerCommand.CHECK:
+                            {
+                                // do nothing
+                                break;
+                            }
+                        case WorkerCommand.START:
+                            {
+                                result = Restart(request);
+                                break;
+                            }
+                        case WorkerCommand.STOP:
+                            {
+                                Stop();
+                                break;
+                            }
+                        case WorkerCommand.CLEAR:
+                            {
+                                // TODO: is it needed here?
+                                break;
+                            }
+                    }
+
+                    WorkerResponse response;
+                    lock (messages)
+                    {
+                        response = new WorkerResponse(result, State, progress, messages.ToArray());
+                        // TODO: clear message and deal with partial transfer on front-end
+                        //messages.Clear();
+                    }
+
+                    _response_buffer.Post<WorkerResponse>(response);
+                }
+                else
+                {
+                    await Task.Delay(10);
+                }
+
+                if (start != null)
+                {
+                    var elapsed = DateTime.Now - (DateTime)start;
+                    if (elapsed.TotalSeconds > 7)
+                    {
+                        process.Kill();
+
+                        lock (messages)
                         {
-                            WorkerResult result = WorkerResult.SUCCESS;
-                            switch (request.command)
-                            {
-                                case WorkerCommand.CHECK:
-                                    {
-                                        // do nothing
-                                        break;
-                                    }
-                                case WorkerCommand.START:
-                                    {
-                                        result = await Restart(request);
-                                        break;
-                                    }
-                                case WorkerCommand.STOP:
-                                    {
-                                        Stop();
-                                        break;
-                                    }
-                                case WorkerCommand.CLEAR:
-                                    {
-                                        // TODO: is it needed here?
-                                        break;
-                                    }
-                            }
-
-                            WorkerResponse response;
-                            lock (messages)
-                            {
-                                response = new WorkerResponse(result, State, progress, messages.ToArray());
-                                // TODO: clear message and deal with partial transfer on front-end
-                                //messages.Clear();
-                            }
-                            _response_buffer.Post<WorkerResponse>(response);
-
+                            messages.Add($"! Timed out and killed after {elapsed.TotalSeconds:F0} s");
                         }
                     }
-                } 
-                catch (OperationCanceledException ex)
-                { 
-                    break;
                 }
+            }
+
+            if (ct.IsCancellationRequested && (process != null))
+            {
+                process.Kill();
             }
         }
     }
