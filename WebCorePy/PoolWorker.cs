@@ -139,7 +139,7 @@ namespace WebCorePy
             return response;
         }
 
-        public WorkerResult Start()
+        public WorkerResult Start(WorkerRequest request)
         {
             messages = new List<string>();
             progress = 0;
@@ -210,10 +210,10 @@ namespace WebCorePy
             end = null;
         }
 
-        public WorkerResult Restart()
+        public WorkerResult Restart(WorkerRequest request)
         {
             Stop();
-            return Start();
+            return Start(request);
         }
 
         public void Cancel()
@@ -223,47 +223,53 @@ namespace WebCorePy
             _cts.Cancel();
         }
 
-        private void Process() 
+        private async void Process() 
         {
             WorkerRequest request;
 
-            // TODO: run process, manage process output
             while (!_cts.IsCancellationRequested)
             {
-                if (_request_buffer.TryReceive<WorkerRequest>(out request))
+                try
                 {
-                    WorkerResult result = WorkerResult.SUCCESS;
-                    switch (request.command)
+                    while(await _request_buffer.OutputAvailableAsync())
                     {
-                        case WorkerCommand.CHECK:
+                        if (_request_buffer.TryReceive<WorkerRequest>(out request))
+                        {
+                            WorkerResult result = WorkerResult.SUCCESS;
+                            switch (request.command)
                             {
-                                // do nothing
-                                break;
+                                case WorkerCommand.CHECK:
+                                    {
+                                        // do nothing
+                                        break;
+                                    }
+                                case WorkerCommand.START:
+                                    {
+                                        result = Restart(request);
+                                        break;
+                                    }
+                                case WorkerCommand.STOP:
+                                    {
+                                        Stop();
+                                        break;
+                                    }
+                                case WorkerCommand.CLEAR:
+                                    {
+                                        // TODO: is it needed here?
+                                        break;
+                                    }
                             }
-                        case WorkerCommand.START:
+                            lock (messages)
                             {
                                 result = Restart(request);
                                 break;
                             }
-                        case WorkerCommand.STOP:
-                            {
-                                Stop();
-                                break;
-                            }
-                        case WorkerCommand.CLEAR:
-                            {
-                                // TODO: is it needed here?
-                                break;
-                            }
+                        }
                     }
-                    lock (messages)
-                    {
-                        WorkerResponse response = new WorkerResponse(result, State, progress, messages.ToArray());
-                        Console.WriteLine(messages.ToString());
-
-                        _response_buffer.Post<WorkerResponse>(response);
-                        //messages.Clear();
-                    }
+                } 
+                catch (OperationCanceledException ex)
+                { 
+                    break;
                 }
                 else
                 {
