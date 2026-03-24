@@ -242,7 +242,7 @@ namespace WebCorePy
                             }
                         case WorkerCommand.START:
                             {
-                                result = Restart();
+                                result = Restart(request);
                                 break;
                             }
                         case WorkerCommand.STOP:
@@ -264,6 +264,10 @@ namespace WebCorePy
                         _response_buffer.Post<WorkerResponse>(response);
                         //messages.Clear();
                     }
+                }
+                else
+                {
+                    await Task.Delay(10);
                 }
             }
         }
