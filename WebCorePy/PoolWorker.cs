@@ -154,8 +154,11 @@ namespace WebCorePy
                 RedirectStandardError = true,
                 CreateNoWindow = true,
                 FileName = "py",
-                Arguments = "-3 py/dummy.py"
             };
+            info.ArgumentList.Add("-3");
+            info.ArgumentList.Add("py/dummy.py");
+            info.ArgumentList.Add("-a");
+            info.ArgumentList.Add(request.algorithms[0]);
 
             // outside processor should deal with data integrity
             process = new Process();
