@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DocumentFormat.OpenXml.Office2016.Excel;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
@@ -91,8 +92,11 @@ namespace WebCorePy
         public string file_train;
         public string file_test;
 
-        List<string> messages = new List<string>();
-        decimal progress;
+        private List<string> messages = new List<string>();
+        private WorkerRequest parameters;
+        private decimal progress;
+        private decimal step;
+        private int currentAlgorithm;
 
         public PoolWorker(CancellationToken ct)
         {
@@ -139,14 +143,8 @@ namespace WebCorePy
             return response;
         }
 
-        public WorkerResult Start(WorkerRequest request)
+        private WorkerResult startAlgorithm(string algorithm)
         {
-            messages = new List<string>();
-            progress = 0;
-            
-            start = DateTime.Now;
-            end = null;
-
             ProcessStartInfo info = new ProcessStartInfo
             {
                 UseShellExecute = false,
@@ -158,7 +156,7 @@ namespace WebCorePy
             info.ArgumentList.Add("-3");
             info.ArgumentList.Add("py/dummy.py");
             info.ArgumentList.Add("-a");
-            info.ArgumentList.Add(request.algorithms[0]);
+            info.ArgumentList.Add(algorithm);
 
             // outside processor should deal with data integrity
             process = new Process();
@@ -175,6 +173,29 @@ namespace WebCorePy
             return res ? WorkerResult.SUCCESS : WorkerResult.ERROR;
         }
 
+        public WorkerResult Start(WorkerRequest request)
+        {
+            parameters = request;
+            var numAlgorithms = parameters.algorithms.Count;
+            
+            if (numAlgorithms > 0)
+            {
+                messages = new List<string>();
+                progress = 0;
+                step =  (decimal)1.0 / numAlgorithms;
+                currentAlgorithm = 0;
+
+                start = DateTime.Now;
+                end = null;
+
+                return startAlgorithm(parameters.algorithms[currentAlgorithm]);
+            }
+            else
+            { 
+                return WorkerResult.ERROR; 
+            }
+        }
+
         private void OutputDataReceived(object sender, DataReceivedEventArgs line)
         {
             lock (messages)
@@ -187,7 +208,9 @@ namespace WebCorePy
         {
             lock (messages)
             {
-                var test = Decimal.TryParse(line.Data, CultureInfo.InvariantCulture, out progress);
+                decimal current;
+                var test = Decimal.TryParse(line.Data, CultureInfo.InvariantCulture, out current);
+                progress = (currentAlgorithm + current) * step;
             }
         }
 
@@ -197,13 +220,25 @@ namespace WebCorePy
             process.CancelErrorRead();
             process.Dispose();
             process = null;
-
-            start = null;
-            end = DateTime.Now;
+            // TODO: register execution time
+            start = DateTime.Now;
+            
+            currentAlgorithm++;
+            if (currentAlgorithm >= parameters.algorithms.Count)
+            {
+                start = null;
+                end = DateTime.Now;
+            }
+            else 
+            {
+                startAlgorithm(parameters.algorithms[currentAlgorithm]);
+            }
         }
 
         public void Stop()
         {
+            currentAlgorithm = parameters.algorithms.Count;
+
             if (process != null)
             {
                 process.Kill();
@@ -270,7 +305,7 @@ namespace WebCorePy
                 if (start != null)
                 {
                     var elapsed = DateTime.Now - (DateTime)start;
-                    if (elapsed.TotalSeconds > 7)
+                    if ((parameters.timeout > 0 ) && (elapsed.TotalSeconds > parameters.timeout))
                     {
                         process.Kill();
 

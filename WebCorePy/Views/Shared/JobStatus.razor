@@ -262,6 +262,7 @@
     {
         JobRequest request = new JobRequest();
         request.slot = slot;
+        // TODO: check number of algorithms > 0
         request.algorithms = settings.Where(kvp => kvp.Value.selected).Select(kvp => kvp.Value.settings).ToList();
         request.timeout = timeout;
         request.fileTrain = await UploadFile(fileTrain);
