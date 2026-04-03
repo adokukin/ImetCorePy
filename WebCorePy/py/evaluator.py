@@ -4,12 +4,28 @@ import sys
 import argparse
 import json
 
+from contextlib import redirect_stderr
+
+import pandas as pd
+from sklearn.model_selection import LeaveOneOut, KFold
+
 def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs, flush=True)
 
 def report_progress(progress):
-    # TODO: decorate additionally if methods use stderr too
     eprint('{:.2f}'.format(progress))
+
+def report_results(results):
+    pass
+
+def load_sample(filename):
+  df = pd.read_excel(filename, index_col=0, header=0)
+  
+  target_idx = df.columns[0]
+  features = df.drop([target_idx], axis=1)
+  target = df[target_idx]
+
+  return features.values, target.values
 
 parser = argparse.ArgumentParser(prog='evaluator')
 parser.add_argument('-a', '--algorithm', help='JSON parameters of an algorithm')
@@ -18,14 +34,14 @@ parser.add_argument('-d', '--data', help='dataset filename')
 args = parser.parse_args()
 print(args.data, flush=True)
 
-algorithm = ''
-if args.algorithm:
-    algorithm = ' ({})'.format(json.loads(args.algorithm)['name'])
+# TODO: is parameters check needed here?
+algorithm = json.loads(args.algorithm)
+validator = LeaveOneOut() if args.folds == 0 else KFold(args.folds)
 
 TOTAL = 10
 for i in range(TOTAL):
     report_progress(i / TOTAL)
     time.sleep(.5)
-    print('Method output: {} s remaining'.format(TOTAL - i) + algorithm, flush=True)
+    print('Method output: {} s remaining ({})'.format(TOTAL - i, algorithm['name']), flush=True)
     time.sleep(.5)
 report_progress(1)
