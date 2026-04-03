@@ -11,7 +11,7 @@ def report_progress(progress):
     # TODO: decorate additionally if methods use stderr too
     eprint('{:.2f}'.format(progress))
 
-parser = argparse.ArgumentParser(prog='dummy')
+parser = argparse.ArgumentParser(prog='evaluator')
 parser.add_argument('-a', '--algorithm', help='JSON parameters of an algorithm')
 args = parser.parse_args()
 algorithm = ''

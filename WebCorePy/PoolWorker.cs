@@ -162,7 +162,7 @@ namespace WebCorePy
                 FileName = "py",
             };
             info.ArgumentList.Add("-3");
-            info.ArgumentList.Add("py/dummy.py");
+            info.ArgumentList.Add("py/evaluator.py");
             info.ArgumentList.Add("-a");
             info.ArgumentList.Add(algorithm);
 
