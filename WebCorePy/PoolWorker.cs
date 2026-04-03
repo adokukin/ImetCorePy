@@ -244,7 +244,8 @@ namespace WebCorePy
             worksheet.Cell(currentAlgorithm + 2, 3).Value = "todo:";
             start = DateTime.Now;
 
-            currentAlgorithm++;            
+            currentAlgorithm++;
+            progress = currentAlgorithm * step;
             if (currentAlgorithm >= parameters.algorithms.Count)
             {
                 // TODO: full training and forecasting if needed
