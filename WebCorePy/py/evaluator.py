@@ -14,7 +14,10 @@ def report_progress(progress):
 parser = argparse.ArgumentParser(prog='evaluator')
 parser.add_argument('-a', '--algorithm', help='JSON parameters of an algorithm')
 parser.add_argument('-f', '--folds', type=int, help='number of validation folds')
+parser.add_argument('-d', '--data', help='dataset filename')
 args = parser.parse_args()
+print(args.data, flush=True)
+
 algorithm = ''
 if args.algorithm:
     algorithm = ' ({})'.format(json.loads(args.algorithm)['name'])
