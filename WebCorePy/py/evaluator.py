@@ -13,6 +13,7 @@ def report_progress(progress):
 
 parser = argparse.ArgumentParser(prog='evaluator')
 parser.add_argument('-a', '--algorithm', help='JSON parameters of an algorithm')
+parser.add_argument('-f', '--folds', type=int, help='number of validation folds')
 args = parser.parse_args()
 algorithm = ''
 if args.algorithm:
