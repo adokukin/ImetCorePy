@@ -233,24 +233,27 @@ namespace WebCorePy.Controllers
             return DispatcherResponceToJson(response);
         }
 
-        private void SaveUploadedFile(string uploadDirectory, string stage, FileUploadModel uploaded)
+        private string SaveUploadedFile(string uploadDirectory, string stage, FileUploadModel uploaded)
         {
+            string filePath = null;
+
             if (uploaded.filename != null)
             {
                 var safeFileName = stage + Path.GetExtension(uploaded.filename);
-                var filePath = Path.Combine(uploadDirectory, safeFileName);
+                filePath = Path.Combine(uploadDirectory, safeFileName);
                 System.IO.File.WriteAllBytes(filePath, uploaded.bytes);
             }
 
+            return filePath;
         }
 
-        private void SaveJobData(int slot, JobRequest request)
+        private (string, string) SaveJobData(int slot, JobRequest request)
         {
             string uploadDirectory = Path.Combine(Directory.GetCurrentDirectory(), "Data" + slot.ToString());
             if (!Directory.Exists(uploadDirectory)) Directory.CreateDirectory(uploadDirectory);
 
-            SaveUploadedFile(uploadDirectory, "training", request.fileTrain);
-            SaveUploadedFile(uploadDirectory, "predicting", request.filePredict);
+            var train = SaveUploadedFile(uploadDirectory, "training", request.fileTrain);
+            var predict = SaveUploadedFile(uploadDirectory, "predicting", request.filePredict);
 
             var filePath = Path.Combine(uploadDirectory, "metadata.json");
             var options = new JsonSerializerOptions { 
@@ -259,6 +262,8 @@ namespace WebCorePy.Controllers
             };
             // TODO: filter relevant fields
             System.IO.File.WriteAllText(filePath, JsonSerializer.Serialize(request, options));
+
+            return (train, predict);
         }
 
         [HttpPost("JobStart")]
@@ -267,12 +272,12 @@ namespace WebCorePy.Controllers
             if (request.slot != null)
             {
                 var slot = (int)request.slot;
-                SaveJobData(slot, request);
+                (var train, var predict) = SaveJobData(slot, request);
 
                 WorkerRequest workerRequest = new WorkerRequest(
                     WorkerCommand.START,
-                    request.fileTrain.filename != null,
-                    request.filePredict.filename != null,
+                    train,
+                    predict,
                     request.algorithms,
                     request.timeout,
                     request.folds

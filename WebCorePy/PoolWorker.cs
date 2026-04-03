@@ -1,6 +1,4 @@
 ﻿using ClosedXML.Excel;
-using DocumentFormat.OpenXml.Office2016.Excel;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -36,8 +34,8 @@ namespace WebCorePy
     public struct WorkerRequest
     {
         public WorkerCommand command {  get; set; }
-        public bool train {  get; set; }
-        public bool test { get; set; }
+        public string train {  get; set; }
+        public string predict { get; set; }
         public List<string> algorithms { get; set; }
         public int timeout { get; set; }
         public int folds { get; set; }
@@ -45,18 +43,18 @@ namespace WebCorePy
         public WorkerRequest(WorkerCommand command)
         {
             this.command = command;
-            this.train = false;
-            this.test = false ;
+            this.train = null;
+            this.predict = null;
             this.algorithms = null;
             this.timeout = 0;
             this.folds = 0 ;
         }
 
-        public WorkerRequest(WorkerCommand command, bool train, bool test, List<string> algorithms, int timeout, int folds)
+        public WorkerRequest(WorkerCommand command, string train, string predict, List<string> algorithms, int timeout, int folds)
         {
             this.command = command;
             this.train = train;
-            this.test = test;
+            this.predict = predict;
             this.algorithms = algorithms;
             this.timeout = timeout;
             this.folds = folds;
@@ -154,7 +152,7 @@ namespace WebCorePy
             return response;
         }
 
-        private WorkerResult startAlgorithm(string algorithm, int folds)
+        private WorkerResult startAlgorithm(string algorithm, int folds, string data)
         {
             ProcessStartInfo info = new ProcessStartInfo
             {
@@ -170,6 +168,8 @@ namespace WebCorePy
             info.ArgumentList.Add(algorithm);
             info.ArgumentList.Add("-f");
             info.ArgumentList.Add(folds.ToString());
+            info.ArgumentList.Add("-d");
+            info.ArgumentList.Add(data);
 
             // outside processor should deal with data integrity
             process = new Process();
@@ -191,7 +191,7 @@ namespace WebCorePy
             parameters = request;
             var numAlgorithms = parameters.algorithms.Count;
             
-            if (numAlgorithms > 0)
+            if ((numAlgorithms > 0) && (request.train != null))
             {
                 workbook = new XLWorkbook();
                 worksheet = workbook.Worksheets.Add("training");
@@ -205,7 +205,7 @@ namespace WebCorePy
                 start = DateTime.Now;
                 end = null;
 
-                return startAlgorithm(parameters.algorithms[currentAlgorithm], parameters.folds);
+                return startAlgorithm(parameters.algorithms[currentAlgorithm], parameters.folds, parameters.train);
             }
             else
             { 
@@ -253,7 +253,7 @@ namespace WebCorePy
             }
             else 
             {
-                startAlgorithm(parameters.algorithms[currentAlgorithm], parameters.folds);
+                startAlgorithm(parameters.algorithms[currentAlgorithm], parameters.folds, parameters.train);
             }
         }
 
