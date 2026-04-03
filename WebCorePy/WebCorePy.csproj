@@ -17,7 +17,6 @@
     <None Remove="py\!update.bat" />
     <None Remove="py\convexforest.py" />
     <None Remove="py\convexforest_crossval.py" />
-    <None Remove="py\dummy.py" />
     <None Remove="py\fragment_r_03.py" />
     <None Remove="py\fragment_r_03.vic.py" />
     <None Remove="py\inmc3\classifier.py" />
@@ -60,7 +59,7 @@
     <Content Include="py\convexforest_crossval.py">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="py\dummy.py">
+    <Content Include="py\evaluator.py">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="py\fragment_r_03.py">
