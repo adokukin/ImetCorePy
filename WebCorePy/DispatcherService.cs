@@ -21,6 +21,7 @@ namespace WebCorePy
         public int timeout { get; set; }
         public FileUploadModel fileTrain { get; set; }
         public FileUploadModel filePredict { get; set; }
+        public int folds { get; set; }
     }
 
     public class DispatcherService : BackgroundService

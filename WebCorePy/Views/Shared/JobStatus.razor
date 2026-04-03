@@ -267,6 +267,7 @@
         request.timeout = timeout;
         request.fileTrain = await UploadFile(fileTrain);
         request.filePredict = await UploadFile(filePredict);
+        request.folds = 0;
 
         HttpResponseMessage response = await Http.PostAsJsonAsync<JobRequest>(NavigationManager.ToAbsoluteUri("JobStart"), request);
         reply = await response.Content.ReadFromJsonAsync<JobStatusReply>();

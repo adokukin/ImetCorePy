@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Channels;
@@ -252,7 +253,10 @@ namespace WebCorePy.Controllers
             SaveUploadedFile(uploadDirectory, "predicting", request.filePredict);
 
             var filePath = Path.Combine(uploadDirectory, "metadata.json");
-            var options = new JsonSerializerOptions { WriteIndented = true };
+            var options = new JsonSerializerOptions { 
+                WriteIndented = true, 
+                Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping 
+            };
             // TODO: filter relevant fields
             System.IO.File.WriteAllText(filePath, JsonSerializer.Serialize(request, options));
         }
@@ -270,8 +274,9 @@ namespace WebCorePy.Controllers
                     request.fileTrain.filename != null,
                     request.filePredict.filename != null,
                     request.algorithms,
-                    request.timeout
-                    );
+                    request.timeout,
+                    request.folds
+                );
                 Message response = await RequestDispatcher(slot, workerRequest);
                 return DispatcherResponceToJson(response);
             }

@@ -40,6 +40,7 @@ namespace WebCorePy
         public bool test { get; set; }
         public List<string> algorithms { get; set; }
         public int timeout { get; set; }
+        public int folds { get; set; }
 
         public WorkerRequest(WorkerCommand command)
         {
@@ -48,15 +49,17 @@ namespace WebCorePy
             this.test = false ;
             this.algorithms = null;
             this.timeout = 0;
+            this.folds = 0 ;
         }
 
-        public WorkerRequest(WorkerCommand command, bool train, bool test, List<string> algorithms, int timeout)
+        public WorkerRequest(WorkerCommand command, bool train, bool test, List<string> algorithms, int timeout, int folds)
         {
             this.command = command;
             this.train = train;
             this.test = test;
             this.algorithms = algorithms;
             this.timeout = timeout;
+            this.folds = folds;
         }
     }
 
@@ -151,7 +154,7 @@ namespace WebCorePy
             return response;
         }
 
-        private WorkerResult startAlgorithm(string algorithm)
+        private WorkerResult startAlgorithm(string algorithm, int folds)
         {
             ProcessStartInfo info = new ProcessStartInfo
             {
@@ -165,6 +168,8 @@ namespace WebCorePy
             info.ArgumentList.Add("py/evaluator.py");
             info.ArgumentList.Add("-a");
             info.ArgumentList.Add(algorithm);
+            info.ArgumentList.Add("-f");
+            info.ArgumentList.Add(folds.ToString());
 
             // outside processor should deal with data integrity
             process = new Process();
@@ -200,7 +205,7 @@ namespace WebCorePy
                 start = DateTime.Now;
                 end = null;
 
-                return startAlgorithm(parameters.algorithms[currentAlgorithm]);
+                return startAlgorithm(parameters.algorithms[currentAlgorithm], parameters.folds);
             }
             else
             { 
@@ -247,7 +252,7 @@ namespace WebCorePy
             }
             else 
             {
-                startAlgorithm(parameters.algorithms[currentAlgorithm]);
+                startAlgorithm(parameters.algorithms[currentAlgorithm], parameters.folds);
             }
         }
 
