@@ -67,7 +67,7 @@ namespace WebCorePy
         {
             for (int i = 0; i < pool.Length; i++)
             {
-                pool[i] = new PoolWorker(stoppingToken);
+                pool[i] = new PoolWorker(stoppingToken, i);
             }
 
             Message candidate;

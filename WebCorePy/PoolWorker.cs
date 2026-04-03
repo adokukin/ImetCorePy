@@ -1,8 +1,11 @@
-﻿using DocumentFormat.OpenXml.Office2016.Excel;
+﻿using ClosedXML.Excel;
+using DocumentFormat.OpenXml.Office2016.Excel;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
@@ -80,6 +83,7 @@ namespace WebCorePy
     {
         private Task _task;
         private CancellationToken ct;
+        private int slot;
         private BufferBlock<WorkerRequest> _request_buffer;
         private BufferBlock<WorkerResponse> _response_buffer;
 
@@ -98,9 +102,13 @@ namespace WebCorePy
         private decimal step;
         private int currentAlgorithm;
 
-        public PoolWorker(CancellationToken ct)
+        private XLWorkbook workbook = null;
+        private IXLWorksheet worksheet;
+
+        public PoolWorker(CancellationToken ct, int slot)
         {
             this.ct = ct;
+            this.slot = slot;
             
             _request_buffer = new BufferBlock<WorkerRequest>();
             _response_buffer = new BufferBlock<WorkerResponse>();
@@ -180,6 +188,10 @@ namespace WebCorePy
             
             if (numAlgorithms > 0)
             {
+                workbook = new XLWorkbook();
+                worksheet = workbook.Worksheets.Add("training");
+                worksheet.Cell(1, 1).InsertData(new[] { "", "Folds", "Method", "R2", "MAE", "MSE", "Time", "Status" }, transpose: true);
+
                 messages = new List<string>();
                 progress = 0;
                 step =  (decimal)1.0 / numAlgorithms;
@@ -220,14 +232,18 @@ namespace WebCorePy
             process.CancelErrorRead();
             process.Dispose();
             process = null;
-            // TODO: register execution time
+
+            // TODO: get data from the process and limiter
+            worksheet.Cell(currentAlgorithm + 2, 7).Value = (DateTime.Now - (DateTime)start).TotalSeconds;
+            worksheet.Cell(currentAlgorithm + 2, 1).Value = currentAlgorithm + 1;
+            worksheet.Cell(currentAlgorithm + 2, 3).Value = "todo:";
             start = DateTime.Now;
-            
-            currentAlgorithm++;
+
+            currentAlgorithm++;            
             if (currentAlgorithm >= parameters.algorithms.Count)
             {
-                start = null;
-                end = DateTime.Now;
+                // TODO: full training and forecasting if needed
+                finished(true);
             }
             else 
             {
@@ -237,15 +253,22 @@ namespace WebCorePy
 
         public void Stop()
         {
-            currentAlgorithm = parameters.algorithms.Count;
-
             if (process != null)
             {
+                currentAlgorithm = parameters.algorithms.Count;
                 process.Kill();
+
+                finished(false);
             }
+        }
+
+        private void finished(bool success)
+        {
+            workbook.SaveAs(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", $"trainging_{slot + 1}.xlsx"), true);
+            workbook.Dispose();
 
             start = null;
-            end = null;
+            end = success ? DateTime.Now : null;
         }
 
         public WorkerResult Restart(WorkerRequest request)
