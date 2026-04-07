@@ -40,9 +40,13 @@
         <div class="form-group">
             <div class="col-md-12">
                 <div class="row">
-                    <button class="btn btn-primary" @onclick="@(() => collapseAlgorithmsList = !collapseAlgorithmsList)">Выбранные методы <span class="badge badge-light" >@settings.Sum(x => x.Value.selected ? 1 : 0)</span></button>
-                    <span>&nbsp;</span>
-                    <div>Таймаут на метод, сек (0 - не установлено): <InputNumber @bind-Value="@timeout" @bind-Value:after="timeoutChanged" size="3" /></div>
+                    <div>Таймаут на метод, сек (0 &mdash; не установлено): <InputNumber @bind-Value="@timeout" @bind-Value:after="timeoutChanged" size="3" /></div>
+                </div>
+                <div class="row">
+                    <div>Количество фолдов (0 &mdash; Leave-One-Out): <InputNumber @bind-Value="@folds" size="3" /></div>
+                </div>
+                <div class="row">
+                    <button class="btn btn-primary" @onclick="@(() => collapseAlgorithmsList = !collapseAlgorithmsList)">Выбранные методы <span class="badge badge-light">@settings.Sum(x => x.Value.selected ? 1 : 0)</span></button>
                 </div>
 
                 @if (!collapseAlgorithmsList)
@@ -110,6 +114,7 @@
     private Dictionary<string, AlgorithmSettings> settings = new Dictionary<string, AlgorithmSettings>();
     private bool collapseAlgorithmsList = true;
     private int timeout;
+    private int folds;
 
     private Timer checkTimer = null;
 
@@ -263,13 +268,22 @@
     {
         JobRequest request = new JobRequest();
         request.slot = slot;
-        // TODO: check number of algorithms > 0 and training sample is set
         request.algorithms = settings.Where(kvp => kvp.Value.selected).Select(kvp => kvp.Value.settings).ToList();
+        // TODO: replace with nice modal dialogues
+        if (request.algorithms.Count==0)
+        {
+            await jsRuntime.InvokeVoidAsync("alert", "Необходимо выбрать хотя бы один алгоритм"); 
+            return;
+        }
+        if (fileTrain == null)
+        {
+            await jsRuntime.InvokeVoidAsync("alert", "Необходимо загрузить обучающую выборку");
+            return;
+        }
         request.timeout = timeout;
         request.fileTrain = fileTrain;
         request.filePredict = filePredict;
-        // TODO: pass number of folds
-        request.folds = 0;
+        request.folds = folds;
 
         HttpResponseMessage response = await Http.PostAsJsonAsync<JobRequest>(NavigationManager.ToAbsoluteUri("JobStart"), request);
         reply = await response.Content.ReadFromJsonAsync<JobStatusReply>();
