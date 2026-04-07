@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
@@ -223,11 +224,35 @@ namespace WebCorePy
 
         private void ErrorDataReceived(object sender, DataReceivedEventArgs line)
         {
-            lock (messages)
+            try
             {
-                decimal current;
-                var test = Decimal.TryParse(line.Data, CultureInfo.InvariantCulture, out current);
-                progress = (currentAlgorithm + current) * step;
+                if (line.Data == null)
+                {
+                    return;
+                }
+                JsonNode message = JsonNode.Parse(line.Data);
+                var type = message["type"].ToString();
+                switch (type)
+                {
+                    case "progress":
+                        progress = (currentAlgorithm + (decimal)message["progress"]) * step;
+                        break;
+                    case "results":
+                        break;
+                    default:
+                        lock (messages)
+                        {
+                            messages.Add($"WARNING! unknown message type {type}");
+                        }
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                lock (messages) 
+                {
+                    messages.Add(ex.Message);
+                }
             }
         }
 

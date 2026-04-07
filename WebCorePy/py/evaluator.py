@@ -13,10 +13,12 @@ def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs, flush=True)
 
 def report_progress(progress):
-    eprint('{:.2f}'.format(progress))
+    message = {'type': 'progress', 'progress': progress}
+    eprint(json.dumps(message))
 
 def report_results(results):
-    pass
+    message = dict(results, type = 'results')
+    eprint(json.dumps(message))
 
 def load_sample(filename):
   df = pd.read_excel(filename, index_col=0, header=0)
@@ -32,7 +34,6 @@ parser.add_argument('-a', '--algorithm', help='JSON parameters of an algorithm')
 parser.add_argument('-f', '--folds', type=int, help='number of validation folds')
 parser.add_argument('-d', '--data', help='dataset filename')
 args = parser.parse_args()
-print(args.data, flush=True)
 
 # TODO: is parameters check needed here?
 algorithm = json.loads(args.algorithm)
