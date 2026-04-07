@@ -20,7 +20,7 @@
                         <div class="col border py-2">
                             @if (fileTrain != null)
                             {
-                                <div class="float-right font-italic">@fileTrain.Name</div>
+                                <div class="float-right font-italic">@fileTrain.filename</div>
                             }
                             <p>Загрузите файл для обучения:</p>
                             <InputFile OnChange="@HandleTrainFileSelection" />
@@ -28,7 +28,7 @@
                         <div class="col border py-2">
                             @if (filePredict != null)
                             {
-                                <div class="float-right font-italic">@filePredict.Name</div>
+                                <div class="float-right font-italic">@filePredict.filename</div>
                             }
                             <p>Загрузите файл для прогнозирования (опционально):</p>
                             <InputFile OnChange="@HandlePredictFileSelection" />
@@ -104,8 +104,8 @@
         }
     }
 
-    private IBrowserFile fileTrain = null;
-    private IBrowserFile filePredict = null;
+    private FileUploadModel fileTrain = null;
+    private FileUploadModel filePredict = null;
     private JsonArray algorithms = new JsonArray();
     private Dictionary<string, AlgorithmSettings> settings = new Dictionary<string, AlgorithmSettings>();
     private bool collapseAlgorithmsList = true;
@@ -193,14 +193,14 @@
         await Check();
     }
 
-    private void HandleTrainFileSelection(InputFileChangeEventArgs e)
+    private async void HandleTrainFileSelection(InputFileChangeEventArgs e)
     {
-        fileTrain = e.File;
+        fileTrain = await UploadFile(e.File);
     }
 
-    private void HandlePredictFileSelection(InputFileChangeEventArgs e)
+    private async void HandlePredictFileSelection(InputFileChangeEventArgs e)
     {
-        filePredict = e.File;
+        filePredict = await UploadFile(e.File);
     }
 
     class JobStatusReply
@@ -248,7 +248,8 @@
         {
             ret = new FileUploadModel { filename = file.Name };
             using var memoryStream = new MemoryStream();
-            await file.OpenReadStream().CopyToAsync(memoryStream);
+            using var fileStream = file.OpenReadStream();
+            await fileStream.CopyToAsync(memoryStream);
             ret.bytes = memoryStream.ToArray();
         }
         else
@@ -265,8 +266,9 @@
         // TODO: check number of algorithms > 0 and training sample is set
         request.algorithms = settings.Where(kvp => kvp.Value.selected).Select(kvp => kvp.Value.settings).ToList();
         request.timeout = timeout;
-        request.fileTrain = await UploadFile(fileTrain);
-        request.filePredict = await UploadFile(filePredict);
+        request.fileTrain = fileTrain;
+        request.filePredict = filePredict;
+        // TODO: pass number of folds
         request.folds = 0;
 
         HttpResponseMessage response = await Http.PostAsJsonAsync<JobRequest>(NavigationManager.ToAbsoluteUri("JobStart"), request);

@@ -237,7 +237,7 @@ namespace WebCorePy.Controllers
         {
             string filePath = null;
 
-            if (uploaded.filename != null)
+            if ((uploaded != null) && (uploaded.filename != null))
             {
                 var safeFileName = stage + Path.GetExtension(uploaded.filename);
                 filePath = Path.Combine(uploadDirectory, safeFileName);
