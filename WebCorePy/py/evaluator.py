@@ -7,6 +7,7 @@ import json
 from contextlib import redirect_stderr
 
 import pandas as pd
+import numpy as np
 from sklearn.model_selection import LeaveOneOut, KFold
 
 def eprint(*args, **kwargs):
@@ -28,6 +29,33 @@ def load_sample(filename):
   target = df[target_idx]
 
   return features.values, target.values
+
+def get_validator(folds = 0):
+  if folds == 0:
+    validator = LeaveOneOut()
+  else:
+    validator = KFold(n_splits = folds, shuffle = True) # TODO: random_state
+  return validator
+
+def validated_predict(model, X, y, folds=0):
+    validator = get_validator(folds)
+    result = np.zeros_like(y)
+    steps = X.shape[0] if folds==0 else folds
+
+    for step, (train_index, test_index) in enumerate(validator.split(X)):
+        # TODO: print step info
+        X_train, X_test = X[train_index], X[test_index]
+        y_train, y_test = y[train_index], y[test_index]
+    
+        model.fit(X_train, y_train)
+        result[test_index] = model.predict(X_test)
+
+        report_progress(round((step + 1) / steps, 2))
+
+    return result
+
+def get_model(algorithm):
+    pass
 
 parser = argparse.ArgumentParser(prog='evaluator')
 parser.add_argument('-a', '--algorithm', help='JSON parameters of an algorithm')
