@@ -43,7 +43,7 @@
                     <div>Таймаут на метод, сек (0 &mdash; не установлено): <InputNumber @bind-Value="@timeout" @bind-Value:after="timeoutChanged" size="3" /></div>
                 </div>
                 <div class="row">
-                    <div>Количество фолдов (0 &mdash; Leave-One-Out): <InputNumber @bind-Value="@folds" size="3" /></div>
+                    <div>Количество фолдов (0 &mdash; Leave-One-Out): <InputNumber @bind-Value="@folds" @bind-Value:after="foldsChanged" size="3" /></div>
                 </div>
                 <div class="row">
                     <button class="btn btn-primary" @onclick="@(() => collapseAlgorithmsList = !collapseAlgorithmsList)">Выбранные методы <span class="badge badge-light">@settings.Sum(x => x.Value.selected ? 1 : 0)</span></button>
@@ -137,6 +137,12 @@
         await jsRuntime.InvokeVoidAsync("SetCookie", "timeout", timeout.ToString());
     }
 
+
+    private async Task foldsChanged()
+    {
+        await jsRuntime.InvokeVoidAsync("SetCookie", "folds", folds.ToString());
+    }
+
     protected override async Task OnInitializedAsync()
     {
         String json = await System.IO.File.ReadAllTextAsync("configs\\algorithms.json");
@@ -191,6 +197,9 @@
                     break;
                 case "timeout":
                     timeout = int.Parse(value);
+                    break;
+                case "folds":
+                    folds = int.Parse(value);
                     break;
             }
         }
