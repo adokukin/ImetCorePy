@@ -92,11 +92,12 @@ namespace WebCorePy
         private int _request_id;
 
         Process process;
-        public WorkerState state;
+        private WorkerState state;
         public DateTime? start;
-        public DateTime? end;
-        public string file_train;
-        public string file_test;
+        private DateTime? end;
+        private string file_train;
+        private string file_test;
+        private bool evaluated;
 
         private List<string> messages = new List<string>();
         private WorkerRequest parameters;
@@ -111,7 +112,7 @@ namespace WebCorePy
         {
             this.ct = ct;
             this.slot = slot;
-            
+
             _request_buffer = new BufferBlock<WorkerRequest>();
             _response_buffer = new BufferBlock<WorkerResponse>();
             _task = Task.Run(() => Process(ct), ct);
@@ -122,6 +123,22 @@ namespace WebCorePy
             end = null;
             file_train = null;
             file_test = null;
+        }
+
+        private string trainingReport
+        { 
+            get 
+            {
+                return Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", $"trainging_{slot + 1}.xlsx");
+            }
+        }
+
+        private string forecastingResults
+        {
+            get
+            {
+                return Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", $"forecasting_{slot + 1}.xlsx");
+            }
         }
 
         public WorkerState State
@@ -155,6 +172,7 @@ namespace WebCorePy
 
         private WorkerResult startAlgorithm(string algorithm, int folds, string data)
         {
+            evaluated = false;
             ProcessStartInfo info = new ProcessStartInfo
             {
                 UseShellExecute = false,
@@ -191,7 +209,10 @@ namespace WebCorePy
         {
             parameters = request;
             var numAlgorithms = parameters.algorithms.Count;
-            
+
+            File.Delete(trainingReport);
+            File.Delete(forecastingResults);
+
             if ((numAlgorithms > 0) && (request.train != null))
             {
                 workbook = new XLWorkbook();
@@ -274,8 +295,12 @@ namespace WebCorePy
             process = null;
 
             start = DateTime.Now;
-            currentAlgorithm++;
-            progress = currentAlgorithm * step;
+            if (evaluated)
+            {
+                currentAlgorithm++;
+                // TODO: adjust progress for predicting
+                progress = currentAlgorithm * step;
+            }
             if (currentAlgorithm >= parameters.algorithms.Count)
             {
                 // TODO: full training and forecasting if needed
@@ -283,7 +308,14 @@ namespace WebCorePy
             }
             else 
             {
-                startAlgorithm(parameters.algorithms[currentAlgorithm], parameters.folds, parameters.train);
+                if (!evaluated)
+                {
+                    startAlgorithm(parameters.algorithms[currentAlgorithm], parameters.folds, parameters.train);
+                }
+                else
+                {
+                    // TODO: start predicting
+                }
             }
         }
 
@@ -300,7 +332,7 @@ namespace WebCorePy
 
         private void finished(bool success)
         {
-            workbook.SaveAs(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", $"trainging_{slot + 1}.xlsx"), true);
+            workbook.SaveAs(trainingReport, true);
             workbook.Dispose();
 
             start = null;
