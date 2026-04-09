@@ -1,22 +1,22 @@
 [
   {
     "name": "LinearRegression",
-    "class": "linear_model.LinearRegression()",
+    "package": "sklearn.linear_model",
     "settings": {}
   },
   {
     "name": "Ridge",
-    "class": "linear_model.Ridge()",
+    "package": "sklearn.linear_model",
     "settings": { "random_state": 15 }
   },
   {
     "name": "Lasso",
-    "class": "linear_model.Lasso()",
+    "package": "sklearn.linear_model",
     "settings": { "random_state": 15 }
   },
   {
     "name": "ElasticNet",
-    "class": "linear_model.ElasticNet()",
+    "package": "sklearn.linear_model",
     "settings": {
       "random_state": 15,
       "normalize": true,
@@ -25,7 +25,7 @@
   },
   {
     "name": "ElasticNetCV",
-    "class": "linear_model.ElasticNetCV()",
+    "package": "sklearn.linear_model",
     "settings": {
       "random_state": 15,
       "normalize": true,
@@ -35,187 +35,233 @@
   },
   {
     "name": "Lars",
-    "class": "linear_model.Lars()",
+    "package": "sklearn.linear_model",
     "settings": {}
   },
   {
     "name": "LassoLars",
-    "class": "linear_model.LassoLars()",
+    "package": "sklearn.linear_model",
     "settings": {}
   },
   {
     "name": "OrthogonalMatchingPursuit",
-    "class": "linear_model.OrthogonalMatchingPursuit()",
+    "package": "sklearn.linear_model",
     "settings": {}
   },
   {
     "name": "BayesianRidge",
-    "class": "linear_model.BayesianRidge()",
+    "package": "sklearn.linear_model",
     "settings": {}
   },
   {
     "name": "ARDRegression",
-    "class": "linear_model.ARDRegression()",
+    "package": "sklearn.linear_model",
     "settings": {}
   },
   {
-    "name": "-- LogisticRegression(int or LabelEncoder)",
-    "class": "linear_model.LogisticRegression()",
+    "name": "LogisticRegression",
+    "package": "sklearn.linear_model",
     "settings": { "random_state": 15 }
   },
   {
     "name": "TweedieRegressor",
-    "class": "linear_model.TweedieRegressor()",
+    "package": "sklearn.linear_model",
     "settings": {}
   },
   {
     "name": "SGDRegressor",
-    "class": "linear_model.SGDRegressor()",
+    "package": "sklearn.linear_model",
     "settings": { "random_state": 15 }
   },
   {
-    "name": "-- Perceptron",
-    "class": "linear_model.Perceptron()",
+    "name": "Perceptron",
+    "package": "sklearn.linear_model",
     "settings": { "random_state": 15 }
   },
   {
     "name": "PassiveAggressiveRegressor",
-    "class": "linear_model.PassiveAggressiveRegressor()",
+    "package": "sklearn.linear_model",
     "settings": { "random_state": 15 }
   },
   {
     "name": "RANSACRegressor",
-    "class": "linear_model.RANSACRegressor()",
+    "package": "sklearn.linear_model",
     "settings": { "random_state": 15 }
   },
   {
     "name": "TheilSenRegressor",
-    "class": "linear_model.TheilSenRegressor()",
+    "package": "sklearn.linear_model",
     "settings": {}
   },
   {
     "name": "HuberRegressor",
-    "class": "linear_model.HuberRegressor()",
+    "package": "sklearn.linear_model",
     "settings": {}
   },
   {
-    "name": "QuantileRegressor (ver1)",
-    "class": "linear_model.QuantileRegressor()",
+    "name": "QuantileRegressor",
+    "package": "sklearn.linear_model",
     "settings": {}
   },
   {
     "name": "KernelRidge",
-    "class": "KernelRidge()",
+    "package": "sklearn.kernel_ridge",
     "settings": {}
   },
   {
-    "name": "svm.SVR",
-    "class": "svm.SVR()",
+    "name": "SVR",
+    "package": "sklearn.svm",
     "settings": {}
   },
   {
-    "name": "svm.NuSVR",
-    "class": "svm.NuSVR()",
+    "name": "NuSVR",
+    "package": "sklearn.svm",
     "settings": {}
   },
   {
-    "name": "svm.LinearSVR",
-    "class": "svm.LinearSVR()",
+    "name": "LinearSVR",
+    "package": "sklearn.svm",
     "settings": { "random_state": 15 }
   },
   {
     "name": "KNeighborsRegressor",
-    "class": "neighbors.KNeighborsRegressor()",
+    "package": "sklearn.neighbors",
     "settings": {}
   },
   {
     "name": "RadiusNeighborsRegressor",
-    "class": "neighbors.RadiusNeighborsRegressor()",
+    "package": "sklearn.neighbors",
     "settings": {}
   },
   {
     "name": "GaussianProcessRegressor",
-    "class": "GaussianProcessRegressor()",
+    "package": "sklearn.gaussian_process",
     "settings": { "random_state": 15 }
   },
   {
     "name": "PLSRegression",
-    "class": "PLSRegression()",
+    "package": "sklearn.cross_decomposition",
     "settings": {}
   },
   {
     "name": "DecisionTreeRegressor",
-    "class": "tree.DecisionTreeRegressor()",
+    "package": "sklearn.tree",
     "settings": { "random_state": 15 }
   },
   {
     "name": "ExtraTreesRegressor",
-    "class": "ensemble.ExtraTreesRegressor()",
+    "package": "sklearn.tree",
     "settings": { "random_state": 15 }
   },
   {
     "name": "GradientBoostingRegressor",
-    "class": "ensemble.GradientBoostingRegressor()",
+    "package": "sklearn.ensemble",
     "settings": { "random_state": 15 }
   },
   {
     "name": "HistGradientBoostingRegressor (ver0.21)",
-    "class": "ensemble.HistGradientBoostingRegressor()",
+    "package": "sklearn.ensemble",
     "settings": { "random_state": 15 }
   },
   {
     "name": "MLPRegressor",
-    "class": "neural_network.MLPRegressor()",
+    "package": "sklearn.neural_network",
     "settings": { "random_state": 15 }
   },
   {
-    "name": "SAND_SimpleSyndromeRegressor",
-    "class": "sand.SimpleSyndromeRegressor()",
+    "name": "SimpleSyndromeRegressor",
+    "package": "sand3_09",
     "settings": {}
   },
   {
-    "name": "-- FRAGMENT_regressor",
-    "class": "fragment.FragmentRegressor()",
+    "name": "FragmentRegressor",
+    "package": "fragment_r_03",
     "settings": { "path": "#ROOT#\\Upload" }
   },
   {
-    "name": "VC: Forest",
-    "class": "DecorrelatedConvexForestRegressor(forest_params = forest_params, convex_combinations_params = None, elnet_params = None)",
-    "settings": {}
+    "name": "DecorrelatedConvexForestRegressor",
+    "description": "Forest",
+    "package": "convexforest",
+    "settings": {
+      "forest_params": {
+        "min_samples_leaf": 3,
+        "n_estimators": 50,
+        "random_state": 6
+      }
+    }
   },
   {
-    "name": "VC: Forest with elastic net",
-    "class": "DecorrelatedConvexForestRegressor(forest_params = forest_params, convex_combinations_params = None, elnet_params = elnet_params)",
-    "settings": {}
+    "name": "DecorrelatedConvexForestRegressor",
+    "description": "Forest with elastic net",
+    "package": "convexforest",
+    "settings": {
+      "forest_params": {
+        "min_samples_leaf": 3,
+        "n_estimators": 50,
+        "random_state": 6
+      },
+      "elnet_params": {
+        "normalize":true,
+        "max_iter":100000,
+        "l1_ratio":0.4
+      }
+    }
   },
   {
-    "name": "VC: Convex with loop reduction",
-    "class": "DecorrelatedConvexForestRegressor(forest_params = None, convex_combinations_params = convex_combinations_params_loop, elnet_params = None)",
-    "settings": {}
+    "name": "DecorrelatedConvexForestRegressor",
+    "description": "Convex with loop reduction",
+    "package": "convexforest",
+    "settings": {
+      "convex_combinations_params": {
+        "n_combinations":400,
+        "generation_threshold":0.999,
+        "decorrelation_type":"loop"
+      }
+    }
   },
   {
-    "name": "VC: Convex with final reduction",
-    "class": "DecorrelatedConvexForestRegressor(forest_params = None, convex_combinations_params = convex_combinations_params_final, elnet_params = None)",
-    "settings": {}
+    "name": "DecorrelatedConvexForestRegressor",
+    "description": "Convex with final reduction",
+    "package": "convexforest",
+    "settings": {
+      "convex_combinations_params": {
+        "n_combinations": 400,
+        "generation_threshold": 0.999,
+        "decorrelation_type": "final"
+      }
+    }
   },
   {
-    "name": "VC: Convex with loop reduction and elastic net",
-    "class": "DecorrelatedConvexForestRegressor(forest_params = None, convex_combinations_params = convex_combinations_params_loop, elnet_params = elnet_params)",
-    "settings": {}
+    "name": "DecorrelatedConvexForestRegressor",
+    "description": "Convex with loop reduction and elastic net",
+    "package": "convexforest",
+    "settings": {
+      "convex_combinations_params": {
+        "n_combinations": 400,
+        "generation_threshold": 0.999,
+        "decorrelation_type": "loop"
+      },
+      "elnet_params": {
+        "normalize": true,
+        "max_iter": 100000,
+        "l1_ratio": 0.4
+      }
+    }
   },
   {
-    "name": "VC: Convex forest with loop reduction and elastic net",
-    "class": "DecorrelatedConvexForestRegressor(forest_params = forest_params, convex_combinations_params = convex_combinations_params_loop, elnet_params = elnet_params)",
-    "settings": {}
-  },
-  {
-    "name": "VC: Convex forest with final reduction and elastic net",
-    "class": "DecorrelatedConvexForestRegressor(forest_params = forest_params, convex_combinations_params = convex_combinations_params_final, elnet_params = elnet_params)",
-    "settings": {}
-  },
-  {
-    "name": "VC: Elastic net",
-    "class": "DecorrelatedConvexForestRegressor(forest_params = None, convex_combinations_params = None, elnet_params = elnet_params)",
-    "settings": {}
+    "name": "DecorrelatedConvexForestRegressor",
+    "description": "Convex forest with final reduction and elastic net",
+    "settings": {
+      "convex_combinations_params": {
+        "n_combinations": 400,
+        "generation_threshold": 0.999,
+        "decorrelation_type": "final"
+      },
+      "elnet_params": {
+        "normalize": true,
+        "max_iter": 100000,
+        "l1_ratio": 0.4
+      }
+    }
   }
 ]
