@@ -230,14 +230,24 @@ namespace WebCorePy
                 {
                     return;
                 }
-                JsonNode message = JsonNode.Parse(line.Data);
-                var type = message["type"].ToString();
+                JsonNode data = (JsonObject)JsonNode.Parse(line.Data);
+                var type = data["type"].ToString();
                 switch (type)
                 {
                     case "progress":
-                        progress = (currentAlgorithm + (decimal)message["progress"]) * step;
+                        progress = (currentAlgorithm + (decimal)data["progress"]) * step;
                         break;
                     case "results":
+                        worksheet.Cell(currentAlgorithm + 2, 1).InsertData(new List<object> { 
+                            currentAlgorithm + 1, 
+                            (int)data["folds"], 
+                            (string)data["method"], 
+                            (float)data["r2"], 
+                            (float)data["mae"], 
+                            (float)data["mse"], 
+                            (float)data["time"], 
+                            (string)data["status"]
+                        }, transpose: true);
                         break;
                     default:
                         lock (messages)
@@ -263,12 +273,7 @@ namespace WebCorePy
             process.Dispose();
             process = null;
 
-            // TODO: get data from the process and limiter
-            worksheet.Cell(currentAlgorithm + 2, 7).Value = (DateTime.Now - (DateTime)start).TotalSeconds;
-            worksheet.Cell(currentAlgorithm + 2, 1).Value = currentAlgorithm + 1;
-            worksheet.Cell(currentAlgorithm + 2, 3).Value = "todo:";
             start = DateTime.Now;
-
             currentAlgorithm++;
             progress = currentAlgorithm * step;
             if (currentAlgorithm >= parameters.algorithms.Count)
@@ -361,6 +366,11 @@ namespace WebCorePy
                     var elapsed = DateTime.Now - (DateTime)start;
                     if ((parameters.timeout > 0 ) && (elapsed.TotalSeconds > parameters.timeout))
                     {
+                        var algorithm = (JsonObject)JsonNode.Parse(parameters.algorithms[currentAlgorithm]);
+                        worksheet.Cell(currentAlgorithm + 2, 1).InsertData(new List<object> {
+                            currentAlgorithm + 1, parameters.folds, (string)algorithm["name"],
+                            null, null, null, elapsed.TotalSeconds, "timeout"
+                        }, transpose: true);
                         process.Kill();
 
                         lock (messages)
