@@ -10,6 +10,7 @@ from importlib import import_module
 
 import pandas as pd
 import numpy as np
+from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import LeaveOneOut, KFold
 from sklearn.metrics import r2_score, mean_absolute_error, mean_squared_error
 
@@ -44,15 +45,16 @@ def validated_predict(model, X, y, folds=0):
     validator = get_validator(folds)
     result = np.zeros_like(y)
     steps = X.shape[0] if folds==0 else folds
-
+    
     for step, (train_index, test_index) in enumerate(validator.split(X)):
         print('Training step {} with {} objects'.format(step + 1, train_index.shape[0]), flush=True)
         X_train, X_test = X[train_index], X[test_index]
         y_train, y_test = y[train_index], y[test_index]
     
         with redirect_stderr(sys.stdout):
-            model.fit(X_train, y_train)
-            result[test_index] = model.predict(X_test)
+            scaler = StandardScaler().fit(X_train)
+            model.fit(scaler.transform(X_train), y_train)
+            result[test_index] = model.predict(scaler.transform(X_test))
 
         report_progress(round((step + 1) / steps, 2))
 
