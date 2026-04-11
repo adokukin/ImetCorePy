@@ -262,13 +262,14 @@ namespace WebCorePy
                         worksheet.Cell(currentAlgorithm + 2, 1).InsertData(new List<object> { 
                             currentAlgorithm + 1, 
                             (int)data["folds"], 
-                            (string)data["method"], 
-                            (float)data["r2"], 
-                            (float)data["mae"], 
-                            (float)data["mse"], 
+                            (string)data["method"],
+                            data["r2"] != null ? (float)data["r2"]: null,
+                            data["mae"] != null ? (float)data["mae"]: null,
+                            data["mse"] != null ? (float)data["mse"]: null, 
                             (float)data["time"], 
                             (string)data["status"]
                         }, transpose: true);
+                        evaluated = true;
                         break;
                     default:
                         lock (messages)
