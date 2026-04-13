@@ -172,7 +172,6 @@ namespace WebCorePy
 
         private WorkerResult startAlgorithm(string algorithm, int folds, string data)
         {
-            evaluated = false;
             ProcessStartInfo info = new ProcessStartInfo
             {
                 UseShellExecute = false,
@@ -298,6 +297,7 @@ namespace WebCorePy
             start = DateTime.Now;
             if (evaluated)
             {
+	            evaluated = false;
                 currentAlgorithm++;
                 // TODO: adjust progress for predicting
                 progress = currentAlgorithm * step;
