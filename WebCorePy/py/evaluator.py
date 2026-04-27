@@ -3,6 +3,7 @@ import random
 import sys
 import argparse
 import json
+import traceback
 from datetime import datetime
 
 from contextlib import redirect_stderr
@@ -32,19 +33,10 @@ def load_sample(filename):
     features = df.drop([target_idx], axis=1)
     target = df[target_idx]
 
-    return features.values, target.values
+    return df, features.values, target.values
 
-def get_validator(folds = 0):
-    if folds == 0:
-        validator = LeaveOneOut()
-    else:
-        validator = KFold(n_splits = folds, shuffle = True) # TODO: random_state
-    return validator
-
-def validated_predict(model, X, y, folds=0):
-    validator = get_validator(folds)
+def validated_predict(model, X, y, validator, steps):
     result = np.zeros_like(y)
-    steps = X.shape[0] if folds==0 else folds
     
     for step, (train_index, test_index) in enumerate(validator.split(X)):
         print('Training step {} with {} objects'.format(step + 1, train_index.shape[0]), flush=True)
@@ -60,54 +52,102 @@ def validated_predict(model, X, y, folds=0):
 
     return result
 
+def forecast(model, tX, ty, fX, steps):
+    with redirect_stderr(sys.stdout):
+        scaler = StandardScaler().fit(tX)
+        model.fit(scaler.transform(tX), ty)
+    
+    report_progress(round((steps - 1) / steps, 2))
+    
+    with redirect_stderr(sys.stdout):
+        result = model.predict(scaler.transform(fX))
+
+    report_progress(1.0)
+
+    return result
+
 def get_model(algorithm):
-    package_name = algorithm["package"]
-    method_name = algorithm["name"]
-    parameters = algorithm["settings"]
+    package_name = algorithm['package']
+    method_name = algorithm['name']
+    parameters = algorithm['settings']
 
     module = import_module(package_name)
     model = getattr(module, method_name)(**parameters)
     return model
 
+def extend_status(status, extension):
+    if status is None:
+        status = extension
+    else:
+        status += ',' + extension
+
 parser = argparse.ArgumentParser(prog='evaluator')
 parser.add_argument('-a', '--algorithm', help='JSON parameters of an algorithm')
-parser.add_argument('-f', '--folds', type=int, help='number of validation folds')
-parser.add_argument('-d', '--data', help='dataset filename')
+parser.add_argument('-e', '--evaluate', type=int, help='number of validation folds, 0 - LOO, -1 - don\'t evaluate')
+parser.add_argument('-t', '--train', help='training dataset filename')
+parser.add_argument('-p', '--predict', help='predicting dataset filename')
 args = parser.parse_args()
 
 try:
     algorithm = json.loads(args.algorithm)
     # TODO: log with timestamps
-    print('Validating method {}'.format(algorithm['name']), flush=True)
+    print('Processing method {}'.format(algorithm['name']), flush=True)
 
-    validator = LeaveOneOut() if args.folds == 0 else KFold(args.folds)
+    results = {
+        'folds': args.evaluate,
+        'method': algorithm['name'],
+        'r2': None,
+        'mae': None,
+        'mse': None,
+        'time': None,
+        'status': None,
+        'results': None
+    }
 
     model = get_model(algorithm)
-    X, y = load_sample(args.data)
-    print('Sample \'{}\' loaded'.format(args.data), flush=True)
+    _, tX, ty = load_sample(args.train)
+    print('Training sample \'{}\' loaded'.format(args.train), flush=True)
+
+    if args.evaluate < 0:
+        validator = None
+        steps = 0
+    else:
+        if args.evaluate == 0:
+            validator = LeaveOneOut()
+            steps = tX.shape[0]
+        else: 
+            validator = KFold(args.evaluate)
+            steps = args.evaluate
+
+    if args.predict is not None:
+        fdf, fX, fy = load_sample(args.predict)
+        print('Predicting sample \'{}\' loaded'.format(args.predict), flush=True)
+        steps += 2
 
     start = datetime.now()
-    predicted = validated_predict(model, X, y, args.folds)
+    if validator is not None:
+        predicted = validated_predict(model, tX, ty, validator, steps)
+        results['r2'] = r2_score(ty, predicted)
+        results['mae'] = mean_absolute_error(ty, predicted)
+        results['mse'] = mean_squared_error(ty, predicted)
+        results['time'] = (datetime.now() - start).total_seconds()
+        results['status'] = extend_status(results['status'], 'ok')
 
-    results = {
-        "folds": args.folds,
-        "method": algorithm["name"],
-        "r2": r2_score(y, predicted),
-        "mae": mean_absolute_error(y, predicted),
-        "mse": mean_squared_error(y, predicted),
-        "time": (datetime.now() - start).total_seconds(),
-        "status": "ok"
-    }
+    if args.predict is not None:
+        forecasted = forecast(model, tX, ty, fX, steps)
+        fdf[fdf.columns[0]] = forecasted
+        filename = args.predict.rsplit('predicting', 1)[0] + 'results.xlsx'
+        with pd.ExcelWriter(filename, engine='openpyxl', mode='a', if_sheet_exists="replace") as writer:  
+            fdf.to_excel(writer, sheet_name=algorithm['name'])
+        results['time'] = (datetime.now() - start).total_seconds()
+        results['results'] = "{}[{}]".format(filename, algorithm['name'])
+        results['status'] = extend_status(results['status'], 'ok')
+
 except Exception as e:
-    results = {
-        "folds": args.folds,
-        "method": algorithm["name"],
-        "r2": None,
-        "mae": None,
-        "mse": None,
-        "time": (datetime.now() - start).total_seconds() if 'start' in locals() else None,
-        "status": str(e)
-    }
+    error = traceback.format_exc();
+    print(error)
+    results['time'] = (datetime.now() - start).total_seconds()
+    results['status'] = extend_status(results['status'], str(e))
 
 print(results, flush=True)
 report_results(results)

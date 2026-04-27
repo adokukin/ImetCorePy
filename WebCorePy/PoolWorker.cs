@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Globalization;
 using System.IO;
 using System.Text.Json.Nodes;
 using System.Threading;
@@ -153,7 +152,7 @@ namespace WebCorePy
             return response;
         }
 
-        private WorkerResult startAlgorithm(string algorithm, int folds, string data)
+        private WorkerResult startAlgorithm(string algorithm, int folds, string train, string predict)
         {
             ProcessStartInfo info = new ProcessStartInfo
             {
@@ -167,10 +166,15 @@ namespace WebCorePy
             info.ArgumentList.Add("py/evaluator.py");
             info.ArgumentList.Add("-a");
             info.ArgumentList.Add(algorithm);
-            info.ArgumentList.Add("-f");
+            info.ArgumentList.Add("-e");
             info.ArgumentList.Add(folds.ToString());
-            info.ArgumentList.Add("-d");
-            info.ArgumentList.Add(data);
+            info.ArgumentList.Add("-t");
+            info.ArgumentList.Add(train);
+            if (predict != null)
+            {
+                info.ArgumentList.Add("-p");
+                info.ArgumentList.Add(predict);
+            }
 
             // outside processor should deal with data integrity
             process = new Process();
@@ -206,7 +210,7 @@ namespace WebCorePy
                 start = DateTime.Now;
                 end = null;
 
-                return startAlgorithm(parameters.algorithms[currentAlgorithm], parameters.folds, parameters.train);
+                return startAlgorithm(parameters.algorithms[currentAlgorithm], parameters.folds, parameters.train, parameters.predict);
             }
             else
             { 
@@ -283,7 +287,7 @@ namespace WebCorePy
             }
             else 
             {
-                startAlgorithm(parameters.algorithms[currentAlgorithm], parameters.folds, parameters.train);
+                startAlgorithm(parameters.algorithms[currentAlgorithm], parameters.folds, parameters.train, parameters.predict);
             }
         }
 
@@ -300,7 +304,7 @@ namespace WebCorePy
 
         private void finished(bool success)
         {
-            workbook.SaveAs(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", $"trainging_{slot + 1}.xlsx"), true);
+            workbook.SaveAs(Path.Combine(Directory.GetCurrentDirectory(), $"Data{slot + 1}", "report.xlsx"), true);
             workbook.Dispose();
 
             start = null;
