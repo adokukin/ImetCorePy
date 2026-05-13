@@ -11,6 +11,26 @@
     @((MarkupString)reply.message)
     <div>Обработчик: @(reply.slot)</div>
 
+    @if (reply.state == WorkerState.READY)
+    {
+        <h1>Результаты работы</h1>
+        @if (File.Exists(reportPath))
+        {
+            <h4>Отчет об обучении</h4>
+            <div class="alert alert-success" role="alert">Сводные результаты обучения в виде файла доступны по <a target="_blank" href="~/Data@(reply.slot + 1)/report.xlsx">ссылке</a></div>
+        }
+        @if (File.Exists(resultsPath))
+        {
+            <h4>Результат прогноза</h4>
+            <div class="alert alert-success" role="alert">Результаты обработки в виде файла доступны по <a target="_blank" href="~/Data@(reply.slot + 1)/results.xlsx">ссылке</a></div>
+        }
+
+        <div class="form-group">
+            <label for="workerOutput" class="form-label">Вывод процесса</label>
+            <textarea @bind="reply.combined" class="form-control" id="workerOutput" rows="10" readonly></textarea>
+        </div>
+    }
+
     @if ((reply.state == WorkerState.EMPTY) || (reply.state == WorkerState.READY))
     {
         <div class="form-group">
@@ -22,16 +42,19 @@
                             {
                                 <div class="float-right font-italic">@fileTrain.filename</div>
                             }
-                            <p>Загрузите файл для обучения:</p>
-                            <InputFile OnChange="@HandleTrainFileSelection" />
+                            <label>Загрузите файл для обучения: <InputFile OnChange="@HandleTrainFileSelection" /></label>
+                            <label>Оценить качество обучения: <InputCheckbox @bind-Value="@evaluate"/></label>
+                            @if (evaluate)
+                            {
+                                <label>Количество фолдов (0 &mdash; Leave-One-Out): <InputNumber @bind-Value="@folds" @bind-Value:after="foldsChanged" style="width: 3em;" /></label>
+                            }
                         </div>
                         <div class="col border py-2">
                             @if (filePredict != null)
                             {
                                 <div class="float-right font-italic">@filePredict.filename</div>
                             }
-                            <p>Загрузите файл для прогнозирования (опционально):</p>
-                            <InputFile OnChange="@HandlePredictFileSelection" />
+                            <label>Загрузите файл для прогнозирования (опционально): <InputFile OnChange="@HandlePredictFileSelection" /></label>  
                         </div>
                     </div>
                 </div>
@@ -40,10 +63,7 @@
         <div class="form-group">
             <div class="col-md-12">
                 <div class="row">
-                    <div>Таймаут на метод, сек (0 &mdash; не установлено): <InputNumber @bind-Value="@timeout" @bind-Value:after="timeoutChanged" size="3" /></div>
-                </div>
-                <div class="row">
-                    <div>Количество фолдов (0 &mdash; Leave-One-Out): <InputNumber @bind-Value="@folds" @bind-Value:after="foldsChanged" size="3" /></div>
+                    <label>Таймаут на метод, сек (0 &mdash; не установлено): <InputNumber @bind-Value="@timeout" @bind-Value:after="timeoutChanged" style="width: 3em;" /></label>
                 </div>
                 <div class="row">
                     <button class="btn btn-primary" @onclick="@(() => collapseAlgorithmsList = !collapseAlgorithmsList)">Выбранные методы <span class="badge badge-light">@settings.Sum(x => x.Value.selected ? 1 : 0)</span></button>
@@ -86,14 +106,6 @@
         </div>
         <button class="btn btn-primary" @onclick="Stop">Остановить</button>
     }
-
-    @if (reply.state == WorkerState.READY)
-    {
-        <div class="form-group">
-            <label for="workerOutput" class="form-label">Вывод процесса</label>
-            <textarea @bind="reply.combined" class="form-control" id="workerOutput" rows="10" readonly></textarea>
-        </div>
-    }
 }
 
 @code {
@@ -115,6 +127,7 @@
     private bool collapseAlgorithmsList = true;
     private int timeout;
     private int folds;
+    private bool evaluate = true;
 
     private Timer checkTimer = null;
 
@@ -210,11 +223,13 @@
     private async void HandleTrainFileSelection(InputFileChangeEventArgs e)
     {
         fileTrain = await UploadFile(e.File);
+        await InvokeAsync(StateHasChanged);
     }
 
     private async void HandlePredictFileSelection(InputFileChangeEventArgs e)
     {
         filePredict = await UploadFile(e.File);
+        await InvokeAsync(StateHasChanged);
     }
 
     class JobStatusReply
@@ -292,7 +307,7 @@
         request.timeout = timeout;
         request.fileTrain = fileTrain;
         request.filePredict = filePredict;
-        request.folds = folds;
+        request.folds = evaluate ? folds : -1;
 
         HttpResponseMessage response = await Http.PostAsJsonAsync<JobRequest>(NavigationManager.ToAbsoluteUri("JobStart"), request);
         reply = await response.Content.ReadFromJsonAsync<JobStatusReply>();
@@ -302,5 +317,20 @@
     private async Task Stop()
     {
         await Task.CompletedTask;
+    }
+
+    private string reportPath
+    {
+        get {
+                return (reply != null) ? Path.Combine(Directory.GetCurrentDirectory(), $"Data{reply.slot}", "report.xlsx") : null;
+            }
+    }
+
+    private string resultsPath
+    {
+        get
+        {
+            return (reply != null) ? Path.Combine(Directory.GetCurrentDirectory(), $"Data{reply.slot}", "results.xlsx") : null;
+        }
     }
 }

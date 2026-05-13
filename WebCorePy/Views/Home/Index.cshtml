@@ -9,28 +9,6 @@
     <h1 class="display-4">Прогноз значений непрерывных величин</h1>
     <p>Загрузите <a href="/Home/Format">данные в формате Excel / CSV</a> и нажмите кпопку "Обработать".</p>
 
-
-    <form method="post" enctype="multipart/form-data" asp-controller="UploadFiles" asp-action="Index">
-        <div class="form-group">
-            <div class="col-md-12">
-                @Html.Raw(ViewBag.Msg)
-
-                @if (ViewBag.ShowResults ?? false) {
-                    <h4>Сводный результат по методам</h4>
-                    <div class="alert alert-success" role="alert">Сводные результаты работы методов в виде файла доступны по <a target="_blank" href="~/Upload/resultScore.@ViewBag.ShowResultsXlsExtension">ссылке</a></div>
-                    @if (ViewBag.ShowResultsXls ?? false) {
-                        <h4>Результат прогноза</h4>
-                        <div class="alert alert-success" role="alert">Результаты обработки в виде файла доступны по <a target="_blank" href="~/Upload/result.@ViewBag.ShowResultsXlsExtension">ссылке</a></div>
-                    }
-                    <h4>Журнал</h4>
-                    <div class="alert alert-success" role="alert">Журнал доступен по <a target="_blank" href="~/Upload/log.txt">ссылке</a></div>
-                    <pre class="text-left">@Html.Raw(ViewBag.Log)</pre>
-
-                }
-            </div>
-        </div>
-    </form>
-
     <component type="typeof(JobStatus)" render-mode="ServerPrerendered" />
 
 </div>

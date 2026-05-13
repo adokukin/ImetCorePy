@@ -140,7 +140,7 @@ try:
         with pd.ExcelWriter(filename, engine='openpyxl', mode='a', if_sheet_exists="replace") as writer:  
             fdf.to_excel(writer, sheet_name=algorithm['name'])
         results['time'] = (datetime.now() - start).total_seconds()
-        results['results'] = "{}[{}]".format(filename, algorithm['name'])
+        results['results'] = "{}[{}]".format(filename, algorithm['name']) # TODO: use or remove
         results['status'] = extend_status(results['status'], 'ok')
 
 except Exception as e:
