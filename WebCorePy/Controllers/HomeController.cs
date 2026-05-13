@@ -250,7 +250,11 @@ namespace WebCorePy.Controllers
         private (string, string) SaveJobData(int slot, JobRequest request)
         {
             string uploadDirectory = Path.Combine(Directory.GetCurrentDirectory(), "Data" + slot.ToString());
-            if (!Directory.Exists(uploadDirectory)) Directory.CreateDirectory(uploadDirectory);
+            if (Directory.Exists(uploadDirectory))
+            { 
+                Directory.Delete(uploadDirectory, true); 
+            }
+            Directory.CreateDirectory(uploadDirectory);
 
             var train = SaveUploadedFile(uploadDirectory, "training", request.fileTrain);
             var predict = SaveUploadedFile(uploadDirectory, "predicting", request.filePredict);
