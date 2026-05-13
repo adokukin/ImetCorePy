@@ -17,12 +17,12 @@
         @if (File.Exists(reportPath))
         {
             <h4>Отчет об обучении</h4>
-            <div class="alert alert-success" role="alert">Сводные результаты обучения в виде файла доступны по <a target="_blank" href="~/Data@(reply.slot)/report.xlsx">ссылке</a></div>
+            <div class="alert alert-success" role="alert">Сводные результаты обучения в виде файла доступны по <a target="_blank" href="/Data@(reply.slot)/report.xlsx">ссылке</a></div>
         }
         @if (File.Exists(resultsPath))
         {
             <h4>Результат прогноза</h4>
-            <div class="alert alert-success" role="alert">Результаты обработки в виде файла доступны по <a target="_blank" href="~/Data@(reply.slot)/results.xlsx">ссылке</a></div>
+            <div class="alert alert-success" role="alert">Результаты обработки в виде файла доступны по <a target="_blank" href="/Data@(reply.slot)/results.xlsx">ссылке</a></div>
         }
 
         <div class="form-group">

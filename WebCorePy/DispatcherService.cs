@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Hosting;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -26,17 +27,21 @@ namespace WebCorePy
 
     public class DispatcherService : BackgroundService
     {
-        public const int NumProcessors = 5;
+        public int NumProcessors;
 
         private Channel<Message> channel;
         private readonly ILogger logger;
 
         private PoolWorker[] pool;
-        public DispatcherService(IChannelSingletonService channelService, ILogger<DispatcherService> logger)
+        public DispatcherService(
+            IChannelSingletonService channelService, 
+            ILogger<DispatcherService> logger,
+            IConfiguration config)
         {
             channel = channelService.channel;
             this.logger = logger;
 
+            NumProcessors = config.GetValue<int>("NumWorkers");
             pool = new PoolWorker[NumProcessors];
         }
 
