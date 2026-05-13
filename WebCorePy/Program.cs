@@ -1,10 +1,13 @@
-using System;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using System;
+using System.IO;
 using WebCorePy;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -51,6 +54,21 @@ else
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+int numWorkers = builder.Configuration.GetValue<int>("NumWorkers");
+for (int i = 0; i < numWorkers; i++)
+{
+    string folder = Path.Combine(builder.Environment.ContentRootPath, $"Data{i + 1}");
+    if (!Directory.Exists(folder))
+    {  
+        Directory.CreateDirectory(folder); 
+    }    
+
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        FileProvider = new PhysicalFileProvider(folder),
+        RequestPath = $"/Data{i+1}"
+    });
+}
 
 app.UseCookiePolicy();
 app.UseSession();
