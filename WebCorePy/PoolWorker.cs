@@ -103,6 +103,7 @@ namespace WebCorePy
         private decimal progress;
         private decimal step;
         private int currentAlgorithm;
+        private bool cancel;
 
         private XLWorkbook workbook = null;
         private IXLWorksheet worksheet;
@@ -206,6 +207,7 @@ namespace WebCorePy
 
         public WorkerResult Start(WorkerRequest request)
         {
+            cancel = false;
             parameters = request;
             var numAlgorithms = parameters.algorithms.Count;
             
@@ -306,31 +308,45 @@ namespace WebCorePy
             start = DateTime.Now;
             currentAlgorithm++;
             progress = currentAlgorithm * step;
-            if (currentAlgorithm >= parameters.algorithms.Count)
+
+            if (cancel)
             {
-                finished(true);
+                finished(false);
             }
-            else 
+            else
             {
-                startAlgorithm(parameters.algorithms[currentAlgorithm], parameters.folds, parameters.train, parameters.predict);
+                if (currentAlgorithm >= parameters.algorithms.Count)
+                {
+                    finished(true);
+                }
+                else
+                {
+                    startAlgorithm(parameters.algorithms[currentAlgorithm], parameters.folds, parameters.train, parameters.predict);
+                }
             }
         }
 
         public void Stop()
         {
+            cancel = true;
             if (process != null)
             {
-                currentAlgorithm = parameters.algorithms.Count;
                 process.Kill();
-
-                finished(false);
             }
         }
 
         private void finished(bool success)
         {
-            workbook.SaveAs(Path.Combine(Directory.GetCurrentDirectory(), $"Data{slot + 1}", "report.xlsx"), true);
-            workbook.Dispose();
+            if (success)
+            {
+                workbook.SaveAs(Path.Combine(Directory.GetCurrentDirectory(), $"Data{slot + 1}", "report.xlsx"), true);
+            }
+
+            if (workbook != null)
+            {
+                workbook.Dispose();
+                workbook = null;
+            }
 
             start = null;
             end = success ? DateTime.Now : null;

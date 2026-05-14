@@ -123,7 +123,7 @@ namespace WebCorePy.Controllers
         }
 
         [HttpGet("JobStatus")]
-        public async Task<IActionResult> Get(int? slot)
+        public async Task<IActionResult> Check(int? slot)
         {
             Message response = await RequestDispatcher(slot, new WorkerRequest(WorkerCommand.CHECK));
             return DispatcherResponceToJson(response);
@@ -167,7 +167,7 @@ namespace WebCorePy.Controllers
         }
 
         [HttpPost("JobStart")]
-        public async Task<IActionResult> Post([FromBody] JobRequest request)
+        public async Task<IActionResult> Start([FromBody] JobRequest request)
         {
             if (request.slot != null)
             {
@@ -189,6 +189,13 @@ namespace WebCorePy.Controllers
             {
                 return null;
             }
+        }
+
+        [HttpGet("JobStop")]
+        public async Task<IActionResult> Stop(int slot)
+        {
+            Message response = await RequestDispatcher(slot, new WorkerRequest(WorkerCommand.STOP));
+            return DispatcherResponceToJson(response);
         }
     }
 }

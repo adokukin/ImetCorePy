@@ -261,7 +261,7 @@
 
     private async Task Check()
     {
-        reply = await Http.GetFromJsonAsync<JobStatusReply>(NavigationManager.ToAbsoluteUri("JobStatus") + "?slot=" + (slot != null ? slot.ToString() : ""));
+        reply = await Http.GetFromJsonAsync<JobStatusReply>(NavigationManager.ToAbsoluteUri("JobStatus") + (slot != null ? "?slot=" + slot.ToString() : ""));
         await HandleResponse();
 
         // TODO: deal with HTTP errors
@@ -316,7 +316,8 @@
 
     private async Task Stop()
     {
-        await Task.CompletedTask;
+        reply = await Http.GetFromJsonAsync<JobStatusReply>(NavigationManager.ToAbsoluteUri("JobStop") + "?slot=" + slot.ToString());
+        await HandleResponse();
     }
 
     private string reportPath
