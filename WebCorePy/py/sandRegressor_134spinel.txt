@@ -1,7 +1,0 @@
-min_features=1
-max_features=-5
-min_sympt_on_count=2
-max_syndr_on_count=15
-min_syndr_on_count=2
-target_interval=.14
-estimation='mean'

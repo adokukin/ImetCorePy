@@ -1,5 +1,0 @@
-set PATH=#PY#\Scripts;#PY#;%PATH%
-set root=#PY#
-call %root%\Scripts\activate base
-%root%\python.exe "#WebRootPath#\py\regressor.py" "#WebRootPath#\upload\!settings.json"
-call %root%\Scripts\deactivate.bat
