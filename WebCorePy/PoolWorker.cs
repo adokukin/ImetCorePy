@@ -282,7 +282,6 @@ namespace WebCorePy
             progress = currentAlgorithm * step;
             if (currentAlgorithm >= parameters.algorithms.Count)
             {
-                // TODO: full training and forecasting if needed
                 finished(true);
             }
             else 
@@ -354,8 +353,7 @@ namespace WebCorePy
                     lock (messages)
                     {
                         response = new WorkerResponse(result, State, progress, messages.ToArray());
-                        // TODO: clear message and deal with partial transfer on front-end
-                        //messages.Clear();
+                        messages.Clear();
                     }
 
                     _response_buffer.Post<WorkerResponse>(response);

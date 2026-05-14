@@ -151,7 +151,7 @@ namespace WebCorePy.Controllers
 
         private JsonResult DispatcherResponceToJson(Message response)
         {
-            String msg = $"<div class=\"alert alert-success\" role=\"alert\">Проверка обработчика {response.target} для {HttpContext.Session.Id}, id {response.id}, ---</div>";
+            String msg = $"<div class=\"alert alert-warning\" role=\"alert\">Проверка обработчика {response.target} для {HttpContext.Session.Id}, id {response.id}, ---</div>";
             WorkerResult? result = null;
             WorkerState? state = null;
             Decimal progress = 0;
@@ -161,7 +161,7 @@ namespace WebCorePy.Controllers
             if (response.response != null)
             {
                 WorkerResponse workerResponse = (WorkerResponse)(response.response);
-                msg = $"<div class=\"alert alert-success\" role=\"alert\">Проверка обработчика {response.target} для {HttpContext.Session.Id}, id {response.id}, state {workerResponse.state}</div>";
+                msg = $"<div class=\"alert alert-primary\" role=\"alert\">Проверка обработчика {response.target} для {HttpContext.Session.Id}, id {response.id}, state {workerResponse.state}</div>";
                 result = workerResponse.result;
                 state = workerResponse.state;
                 progress = workerResponse.progress;

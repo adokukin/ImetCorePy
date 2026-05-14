@@ -27,7 +27,7 @@
 
         <div class="form-group">
             <label for="workerOutput" class="form-label">Вывод процесса</label>
-            <textarea @bind="reply.combined" class="form-control" id="workerOutput" rows="10" readonly></textarea>
+            <textarea @bind="log" class="form-control" id="workerOutput" rows="10" readonly></textarea>
         </div>
     }
 
@@ -102,7 +102,7 @@
                 </div>
             </div>
             <label for="workerOutput" class="form-label">Вывод процесса</label>
-            <textarea @bind="reply.combined" class="form-control" id="workerOutput" rows="10" readonly></textarea>
+            <textarea @bind="log" class="form-control" id="workerOutput" rows="10" readonly></textarea>
         </div>
         <button class="btn btn-primary" @onclick="Stop">Остановить</button>
     }
@@ -239,15 +239,10 @@
         public decimal progress { get; set; }
         public int? slot { get; set; }
         public string[] output { get; set; }
-        public string combined { 
-            get {
-                return string.Join("\r\n", output);
-            }
-            set {}
-        }
     }
 
     private JobStatusReply reply = null;
+    private string log = "";
     private int? slot = null;
 
     private async Task HandleResponse()
@@ -256,6 +251,10 @@
         {
             checkTimer.Start();
         }
+
+        string output = string.Join(Environment.NewLine, reply.output);
+        log = log + (!string.IsNullOrEmpty(log) && !string.IsNullOrEmpty(output) ? Environment.NewLine : "") + output;
+
         // Update UI thread-safely
         await InvokeAsync(StateHasChanged);
     }
@@ -290,6 +289,7 @@
 
     private async Task Start()
     {
+        log = "";
         JobRequest request = new JobRequest();
         request.slot = slot;
         request.algorithms = settings.Where(kvp => kvp.Value.selected).Select(kvp => kvp.Value.settings).ToList();
