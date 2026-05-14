@@ -1,4 +1,5 @@
 ﻿using ClosedXML.Excel;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -106,10 +107,13 @@ namespace WebCorePy
         private XLWorkbook workbook = null;
         private IXLWorksheet worksheet;
 
-        public PoolWorker(CancellationToken ct, int slot)
+        private ILogger logger;
+
+        public PoolWorker(CancellationToken ct, int slot, ILogger logger)
         {
             this.ct = ct;
             this.slot = slot;
+            this.logger = logger;
             
             _request_buffer = new BufferBlock<WorkerRequest>();
             _response_buffer = new BufferBlock<WorkerResponse>();
@@ -121,6 +125,11 @@ namespace WebCorePy
             end = null;
             file_train = null;
             file_test = null;
+        }
+
+        private string decorateLogMessage(string message)
+        {
+            return $"SLOT {slot}: {message}";
         }
 
         public WorkerState State
@@ -154,6 +163,10 @@ namespace WebCorePy
 
         private WorkerResult startAlgorithm(string algorithm, int folds, string train, string predict)
         {
+            logger.LogInformation(decorateLogMessage(
+                $"Starting algorithm {algorithm} with {folds} folds on '{train}' and '{predict}' datasets"
+            ));
+
             ProcessStartInfo info = new ProcessStartInfo
             {
                 UseShellExecute = false,
@@ -220,6 +233,9 @@ namespace WebCorePy
 
         private void OutputDataReceived(object sender, DataReceivedEventArgs line)
         {
+            logger.LogDebug(decorateLogMessage( // TODO: log buffer overflows when writing, use different library
+                $"- {line.Data}"
+            ));
             lock (messages)
             {
                 messages.Add(line.Data);
@@ -240,8 +256,14 @@ namespace WebCorePy
                 {
                     case "progress":
                         progress = (currentAlgorithm + (decimal)data["progress"]) * step;
+                        logger.LogDebug(decorateLogMessage(
+                            $"progress received: {progress}"
+                        ));
                         break;
                     case "results":
+                        logger.LogInformation(decorateLogMessage(
+                            $"results received: {data.ToString()}"
+                        ));
                         worksheet.Cell(currentAlgorithm + 2, 1).InsertData(new List<object> { 
                             currentAlgorithm + 1, 
                             (int)data["folds"], 
@@ -254,6 +276,10 @@ namespace WebCorePy
                         }, transpose: true);
                         break;
                     default:
+                        logger.LogWarning(decorateLogMessage(
+                            $"Unknown message type {type}"
+                        ));
+
                         lock (messages)
                         {
                             messages.Add($"WARNING! unknown message type {type}");
@@ -320,10 +346,18 @@ namespace WebCorePy
         {
             WorkerRequest request;
 
+            logger.LogInformation(decorateLogMessage(
+                $"Worker started"
+            ));
+
             while (!ct.IsCancellationRequested)
             {
                 if (_request_buffer.TryReceive<WorkerRequest>(out request))
                 {
+                    logger.LogInformation(decorateLogMessage(
+                        $"Processing request {request.command}"    
+                    )); 
+                    
                     WorkerResult result = WorkerResult.SUCCESS;
                     switch (request.command)
                     {
@@ -368,6 +402,10 @@ namespace WebCorePy
                     var elapsed = DateTime.Now - (DateTime)start;
                     if ((parameters.timeout > 0 ) && (elapsed.TotalSeconds > parameters.timeout))
                     {
+                        logger.LogInformation(decorateLogMessage(
+                            $"Processing stopped after {elapsed.TotalSeconds} seconds"
+                        ));
+
                         var algorithm = (JsonObject)JsonNode.Parse(parameters.algorithms[currentAlgorithm]);
                         worksheet.Cell(currentAlgorithm + 2, 1).InsertData(new List<object> {
                             currentAlgorithm + 1, parameters.folds, (string)algorithm["name"],
@@ -387,6 +425,9 @@ namespace WebCorePy
             {
                 process.Kill();
             }
+            logger.LogInformation(decorateLogMessage(
+                $"Worker stopped"
+            ));
         }
     }
 }

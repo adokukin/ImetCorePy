@@ -73,7 +73,7 @@ namespace WebCorePy
         {
             for (int i = 0; i < pool.Length; i++)
             {
-                pool[i] = new PoolWorker(stoppingToken, i);
+                pool[i] = new PoolWorker(stoppingToken, i, logger);
             }
 
             Message candidate;
@@ -85,7 +85,7 @@ namespace WebCorePy
                     if (channel.Reader.TryPeek(out candidate) && (candidate.target == 0))
                     {
                         Message request = await channel.Reader.ReadAsync();
-                        logger.LogInformation($"Read success {request.id}, {request.source} -> {request.target}, {request.session}");
+                        logger.LogInformation($"Task read success {request.id}, {request.source} -> {request.target}, {request.session}");
 
                         Message response = new Message();
                         response.id = request.id;
@@ -96,22 +96,25 @@ namespace WebCorePy
                         if (request.source == null)
                         {
                             slot = GetFreeSlot(); // TODO: should there be error?
+                            logger.LogInformation($"New slot obtained: {slot}");
                         }
                         else
                         {
                             slot = (int)request.source;
+                            logger.LogInformation($"Requested a specific slot: {slot}");
                         }
                         response.target = slot;
 
                         if (request.request == null)
                         {
+                            logger.LogError($"No request options provided");
                             throw new InvalidOperationException();
                         }
                         WorkerRequest workerRequest = (WorkerRequest)(request.request);
                         response.response = await pool[slot - 1].Command(workerRequest);
 
                         WorkerResponse workerResponse = (WorkerResponse)(response.response);
-                        logger.LogInformation($"Processed {response.id}, {response.source} -> {response.target}, {workerResponse.state}");
+                        logger.LogInformation($"Task processed {response.id}, {response.source} -> {response.target}, {workerResponse.state}");
                         channel.Writer.TryWrite(response);
                     }
                 }
