@@ -1,3 +1,4 @@
+using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -6,7 +7,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using NReco.Logging.File;
 using System;
+using System.Configuration;
 using System.IO;
 using WebCorePy;
 
@@ -18,6 +21,10 @@ builder.Services.Configure<CookiePolicyOptions>(options =>
 });
 
 builder.Logging.AddDebug();
+builder.Services.AddLogging(loggingBuilder => {
+    var loggingSection = builder.Configuration.GetSection("Logging");
+    loggingBuilder.AddFile(loggingSection);
+});
 
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>(); // добавим возможность доступа к контексту HttpContext
 builder.Services.AddSingleton<IChannelSingletonService, ChannelSingletonService>();
