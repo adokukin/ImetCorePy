@@ -5,6 +5,7 @@ import argparse
 import json
 import traceback
 from datetime import datetime
+import os
 
 from contextlib import redirect_stderr
 from importlib import import_module
@@ -137,8 +138,12 @@ try:
         forecasted = forecast(model, tX, ty, fX, steps)
         fdf[fdf.columns[0]] = forecasted
         filename = args.predict.rsplit('predicting', 1)[0] + 'results.xlsx'
-        with pd.ExcelWriter(filename, engine='openpyxl', mode='a', if_sheet_exists="replace") as writer:  
-            fdf.to_excel(writer, sheet_name=algorithm['name'])
+        if os.path.exists(filename):
+            with pd.ExcelWriter(filename, engine='openpyxl', mode='a', if_sheet_exists="replace") as writer:  
+                fdf.to_excel(writer, sheet_name=algorithm['name'])
+        else:
+            with pd.ExcelWriter(filename, engine='openpyxl', mode='w') as writer:  
+                fdf.to_excel(writer, sheet_name=algorithm['name'])
         results['time'] = (datetime.now() - start).total_seconds()
         results['results'] = "{}[{}]".format(filename, algorithm['name']) # TODO: use or remove
         results['status'] = extend_status(results['status'], 'ok')
