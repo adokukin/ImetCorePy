@@ -7,6 +7,7 @@
     <UserSecretsId>644e8fca-caa6-48e2-8065-48e7a3b89391</UserSecretsId>
     <OutputType>Exe</OutputType>
     <IsTransformWebConfigDisabled>false</IsTransformWebConfigDisabled>
+    <SatelliteResourceLanguages>en;ru</SatelliteResourceLanguages>
   </PropertyGroup>
 
   <ItemGroup>
