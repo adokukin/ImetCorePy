@@ -191,7 +191,12 @@
 
         foreach(var cookie in cookies.Split(";"))
         {
-            var parts = cookie.Split("=");
+            string[] parts = cookie.Split("=");
+            if (parts.Length != 2)
+            {
+                continue;
+            }
+
             string key = parts[0].Trim();
             string value = parts[1].Trim();
 
