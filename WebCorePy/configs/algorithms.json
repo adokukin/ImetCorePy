@@ -180,60 +180,7 @@
   },
   {
     "name": "DecorrelatedConvexForestRegressor",
-    "description": "Forest",
-    "package": "convexforest",
-    "settings": {
-      "forest_params": {
-        "min_samples_leaf": 3,
-        "n_estimators": 50,
-        "random_state": 6
-      }
-    }
-  },
-  {
-    "name": "DecorrelatedConvexForestRegressor",
-    "description": "Forest with elastic net",
-    "package": "convexforest",
-    "settings": {
-      "forest_params": {
-        "min_samples_leaf": 3,
-        "n_estimators": 50,
-        "random_state": 6
-      },
-      "elnet_params": {
-        "normalize":true,
-        "max_iter":100000,
-        "l1_ratio":0.4
-      }
-    }
-  },
-  {
-    "name": "DecorrelatedConvexForestRegressor",
-    "description": "Convex with loop reduction",
-    "package": "convexforest",
-    "settings": {
-      "convex_combinations_params": {
-        "n_combinations":400,
-        "generation_threshold":0.999,
-        "decorrelation_type":"loop"
-      }
-    }
-  },
-  {
-    "name": "DecorrelatedConvexForestRegressor",
-    "description": "Convex with final reduction",
-    "package": "convexforest",
-    "settings": {
-      "convex_combinations_params": {
-        "n_combinations": 400,
-        "generation_threshold": 0.999,
-        "decorrelation_type": "final"
-      }
-    }
-  },
-  {
-    "name": "DecorrelatedConvexForestRegressor",
-    "description": "Convex with loop reduction and elastic net",
+    "description": "Convex forest with loop reduction",
     "package": "convexforest",
     "settings": {
       "convex_combinations_params": {
@@ -241,26 +188,10 @@
         "generation_threshold": 0.999,
         "decorrelation_type": "loop"
       },
-      "elnet_params": {
-        "normalize": true,
-        "max_iter": 100000,
-        "l1_ratio": 0.4
-      }
-    }
-  },
-  {
-    "name": "DecorrelatedConvexForestRegressor",
-    "description": "Convex forest with final reduction and elastic net",
-    "settings": {
-      "convex_combinations_params": {
-        "n_combinations": 400,
-        "generation_threshold": 0.999,
-        "decorrelation_type": "final"
-      },
-      "elnet_params": {
-        "normalize": true,
-        "max_iter": 100000,
-        "l1_ratio": 0.4
+      "forest_params": {
+        "min_samples_leaf": 3,
+        "n_estimators": 50,
+        "random_state": 6
       }
     }
   }

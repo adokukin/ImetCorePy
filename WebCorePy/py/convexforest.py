@@ -17,18 +17,9 @@ import inmc3
 class DecorrelatedConvexForestRegressor(BaseEstimator, RegressorMixin):
     
     def __init__(self,
-        forest_params = {
-            'min_samples_leaf': 3,
-            'n_estimators': 50
-        },
-        convex_combinations_params = {
-            'n_combinations': 400,
-            'generation_threshold': 0.99
-        },
-        elnet_params={
-            'normalize':True,
-            'max_iter':100000
-        }):
+        forest_params = None,
+        convex_combinations_params=None,
+        elnet_params=None):
         
         self.forest_params = forest_params
         self.convex_combinations_params = convex_combinations_params
