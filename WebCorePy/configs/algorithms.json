@@ -59,11 +59,6 @@
     "settings": {}
   },
   {
-    "name": "LogisticRegression",
-    "package": "sklearn.linear_model",
-    "settings": { "random_state": 15 }
-  },
-  {
     "name": "TweedieRegressor",
     "package": "sklearn.linear_model",
     "settings": {}
@@ -74,17 +69,7 @@
     "settings": { "random_state": 15 }
   },
   {
-    "name": "Perceptron",
-    "package": "sklearn.linear_model",
-    "settings": { "random_state": 15 }
-  },
-  {
     "name": "PassiveAggressiveRegressor",
-    "package": "sklearn.linear_model",
-    "settings": { "random_state": 15 }
-  },
-  {
-    "name": "RANSACRegressor",
     "package": "sklearn.linear_model",
     "settings": { "random_state": 15 }
   },
@@ -129,11 +114,6 @@
     "settings": {}
   },
   {
-    "name": "RadiusNeighborsRegressor",
-    "package": "sklearn.neighbors",
-    "settings": {}
-  },
-  {
     "name": "GaussianProcessRegressor",
     "package": "sklearn.gaussian_process",
     "settings": { "random_state": 15 }
@@ -172,11 +152,6 @@
     "name": "SimpleSyndromeRegressor",
     "package": "sand3_09",
     "settings": {}
-  },
-  {
-    "name": "FragmentRegressor",
-    "package": "fragment_r_03",
-    "settings": { "path": "#ROOT#\\Upload" }
   },
   {
     "name": "DecorrelatedConvexForestRegressor",
